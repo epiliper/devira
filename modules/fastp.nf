@@ -22,7 +22,6 @@ process FASTP {
     def args = task.ext.args ?: ' ' 
     def prefix = task.ext.prefix ?: "${meta.id}"
     def adapter_list = adapter_fasta ? "--adapter_fasta ${adapter_fasta}" : ""
-    log.info("${task.cpus}")
     // Added soft-links to original fastqs for consistent naming in MultiQC
     // Use single ended for interleaved. Add --interleaved_in in config.
     if ( task.ext.args?.contains('--interleaved_in') ) {
