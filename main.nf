@@ -7,6 +7,7 @@ include { INPUT_CHECK } from './subworkflows/input_check'
 include { KRAKEN2 } from './modules/kraken2'
 include { FASTP_MULTIQC } from './subworkflows/fastp_multiqc'
 include { CD_HIT_DUP } from './modules/cd_hit_dup'
+include { METASPADES } from './modules/metaspades'
 
 
 log.info "Reference-guided denovo assembly"
@@ -46,7 +47,13 @@ workflow {
         CD_HIT_DUP(
             ch_sample_input
         )
-
-
+        ch_sample_input = CD_HIT_DUP.out.reads
     }
+
+    METASPADES(
+        ch_sample_input,
+        params.metaspades_outdir
+    )
+
+    // fastas = METASPADES.out.all_fastas
 }
