@@ -52,7 +52,6 @@ workflow {
 
     METASPADES(
         ch_sample_input,
-        params.metaspades_outdir
     )
 
     // fastas = METASPADES.out.all_fastas
