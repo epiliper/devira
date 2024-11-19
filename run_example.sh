@@ -1,1 +1,1 @@
-	nextflow run main.nf --input example/example_samplesheet.csv --output example_output -profile docker
+nextflow run main.nf --input example/piv_samplesheet.csv --output example_output -profile docker -process.echo "$1" 

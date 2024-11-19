@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2
+PiV2-089908_S8,./example/PiV2-089908_S8_L001_R1.fastq.gz,./example/PiV2-089908_S8_L001_R2.fastq.gz
