@@ -1,8 +1,8 @@
-process METASPADES {
+process MEGAHIT {
 
     tag "$meta.id"
     label 'process_high'
-    container 'staphb/spades:4.0.0'
+    container 'vout/megahit:release-v1.2.9'
 
 
     input:
@@ -10,7 +10,7 @@ process METASPADES {
 
 
     output:
-    path("contigs.fasta"), emit: contigs_fasta
+    path("./${meta.id}/final.contigs.fa"), emit: contigs_fasta
     val("${meta.id}"), emit: sample_id
 
     script: 
@@ -18,15 +18,15 @@ process METASPADES {
     """
 
     if [ "${meta.single_end}" = true ]; then
-        metaspades.py \\
-        -s ${reads} \\
-        -o .
+        megahit \\
+        ${reads} \\
+        -o ${meta.id}
 
     else
-        metaspades.py \\
+        megahit \\
         -1 ${reads[0]} \\
         -2 ${reads[1]} \\
-        -o .
+        -o ${meta.id}
     fi
     """
 

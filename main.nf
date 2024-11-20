@@ -7,9 +7,9 @@ include { INPUT_CHECK } from './subworkflows/input_check'
 include { KRAKEN2 } from './modules/kraken2'
 include { FASTP_MULTIQC } from './subworkflows/fastp_multiqc'
 include { CD_HIT_DUP } from './modules/cd_hit_dup'
-include { METASPADES } from './modules/metaspades'
 include { CHOOSE_BEST_REF } from './modules/scaffold_gen'
 include { SUBSAMPLE_FASTQ } from './modules/subsample'
+include { CONTIG_GEN } from './subworkflows/contig_gen'
 
 
 log.info "Reference-guided denovo assembly"
@@ -65,17 +65,14 @@ workflow {
         ch_sample_input = CD_HIT_DUP.out.reads
     }
 
-    METASPADES(
+    CONTIG_GEN(
         ch_sample_input,
+        params.contig_method,
     )
 
     CHOOSE_BEST_REF(
-        METASPADES.out.sample_id,
-        METASPADES.out.contigs_fasta,
+        CONTIG_GEN.out.sid,
+        CONTIG_GEN.out.contigs,
         params.refs
     )
-
-
-
-    // fastas = METASPADES.out.all_fastas
 }
