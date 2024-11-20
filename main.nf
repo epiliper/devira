@@ -7,9 +7,12 @@ include { INPUT_CHECK } from './subworkflows/input_check'
 include { KRAKEN2 } from './modules/kraken2'
 include { FASTP_MULTIQC } from './subworkflows/fastp_multiqc'
 include { CD_HIT_DUP } from './modules/cd_hit_dup'
-include { CHOOSE_BEST_REF } from './modules/scaffold_gen'
 include { SUBSAMPLE_FASTQ } from './modules/subsample'
+
 include { CONTIG_GEN } from './subworkflows/contig_gen'
+
+include { CHOOSE_BEST_REF } from './modules/choose_best_ref'
+include { ORDER_AND_ORIENT } from './modules/order_and_orient'
 
 
 log.info "Reference-guided denovo assembly"
@@ -20,6 +23,8 @@ workflow {
     INPUT_CHECK (
         ch_input
     )
+
+    ref_ch = Channel.fromPath("${params.refs}/*.fa")
 
     inreads = INPUT_CHECK.out.reads
 
@@ -34,7 +39,6 @@ workflow {
     }
 
     FASTP_MULTIQC (
-        // INPUT_CHECK.out.reads,
         inreads,
         params.adapter_fasta,
         params.save_merged,
@@ -73,6 +77,13 @@ workflow {
     CHOOSE_BEST_REF(
         CONTIG_GEN.out.sid,
         CONTIG_GEN.out.contigs,
-        params.refs
+        ref_ch
+    )
+
+    ORDER_AND_ORIENT(
+        CONTIG_GEN.out.sid,
+        CONTIG_GEN.out.contigs,
+        CHOOSE_BEST_REF.out.chosen_ref,
+        ref_ch
     )
 }

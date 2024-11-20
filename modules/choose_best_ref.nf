@@ -10,9 +10,10 @@ process CHOOSE_BEST_REF {
     path(ref_fastas)
 
     output: 
-    path("./CHOSEN_REF_BASENAME"), emit: chosen_ref
+    path("./CHOSEN_REF"), emit: chosen_ref
 
     script:
+
     """
 
     assembly.py skani_contigs_to_refs \\
@@ -25,8 +26,8 @@ process CHOOSE_BEST_REF {
 
 
     CHOSEN_REF_FASTA=\$(cut -f 1 "${sample_id}.refs_skani_dist.full.tsv" | tail +2 | head -1)
-          
-    basename "\$CHOSEN_REF_FASTA" .fasta > CHOSEN_REF_BASENAME
+
+    echo "\$CHOSEN_REF_FASTA" > CHOSEN_REF
 
     """
 }
