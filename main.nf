@@ -13,6 +13,7 @@ include { CONTIG_GEN } from './subworkflows/contig_gen'
 
 include { CHOOSE_BEST_REF } from './modules/choose_best_ref'
 include { ORDER_AND_ORIENT } from './modules/order_and_orient'
+include { GAP_FILL } from './modules/gap_fill'
 
 
 
@@ -94,5 +95,11 @@ workflow {
         CONTIG_GEN.out.contigs,
         CHOOSE_BEST_REF.out.chosen_ref,
         ref_ch
+    )
+
+    GAP_FILL(
+        CONTIG_GEN.out.sid,
+        ch_sample_input,
+        ORDER_AND_ORIENT.out.intermediate_scaffold
     )
 }

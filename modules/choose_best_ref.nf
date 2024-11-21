@@ -1,6 +1,6 @@
 process CHOOSE_BEST_REF {
 
-    tag "$fasta"
+    tag "$sample_id"
     label 'process_high'
     container 'ilepeli/viral_assemble:latest'
 
