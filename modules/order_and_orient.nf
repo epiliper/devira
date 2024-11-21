@@ -12,6 +12,7 @@ process ORDER_AND_ORIENT {
 
     output: 
     path("./${sample_id}_intermediate_scaffold.fasta"), emit: intermediate_scaffold
+    path("./")
 
     script:
 
@@ -26,5 +27,6 @@ process ORDER_AND_ORIENT {
     --loglevel=DEBUG
 
     """
+
     
 }
