@@ -15,10 +15,19 @@ include { CHOOSE_BEST_REF } from './modules/choose_best_ref'
 include { ORDER_AND_ORIENT } from './modules/order_and_orient'
 
 
-log.info "Reference-guided denovo assembly"
+
+log.info("   █████████   ██████████     █████████   ███████████      ") 
+log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
+log.info(" ░███    ░███  ░███   ░░███ ░███    ░███  ░███    ░███     ") 
+log.info(" ░███████████  ░███    ░███ ░███████████  ░██████████      ") 
+log.info(" ░███░░░░░███  ░███    ░███ ░███░░░░░███  ░███░░░░░███     ")
+log.info(" ░███    ░███  ░███    ███  ░███    ░███  ░███    ░███     ")
+log.info(" █████   █████ ██████████   █████   █████ █████   █████    ")
+log.info("░░░░░   ░░░░░ ░░░░░░░░░░   ░░░░░   ░░░░░ ░░░░░   ░░░░░     ") 
+log.info "Assisted de-novo assembly via reference\n"
+
 
 workflow {
-    log.info("Workflow started")
 
     INPUT_CHECK (
         ch_input
