@@ -14,7 +14,9 @@ include { CONTIG_GEN } from './subworkflows/contig_gen'
 include { CHOOSE_BEST_REF } from './modules/choose_best_ref'
 include { ORDER_AND_ORIENT } from './modules/order_and_orient'
 include { GAP_FILL } from './modules/gap_fill'
-include {IMPUTE_FROM_REFERENCE } from './modules/impute_from_reference'
+include { IMPUTE_FROM_REFERENCE } from './modules/impute_from_reference'
+include { MUMMER } from './modules/mummer'
+include { FILTER_CONTIGS } from './modules/filter_contigs'
 
 
 
@@ -91,23 +93,34 @@ workflow {
         ref_ch
     )
 
-    ORDER_AND_ORIENT(
+    // ORDER_AND_ORIENT(
+    MUMMER(
         CONTIG_GEN.out.sid,
         CONTIG_GEN.out.contigs,
         CHOOSE_BEST_REF.out.chosen_ref,
         ref_ch
     )
 
-    GAP_FILL(
+    FILTER_CONTIGS(
         CONTIG_GEN.out.sid,
-        ch_sample_input,
-        ORDER_AND_ORIENT.out.intermediate_scaffold
+        MUMMER.out.tile,
+        CHOOSE_BEST_REF.out.chosen_ref,
+        ref_ch,
+        MUMMER.out.delta,
     )
 
-    IMPUTE_FROM_REFERENCE(
-        CONTIG_GEN.out.sid,
-        CHOOSE_BEST_REF.out.chosen_ref,
-        GAP_FILL.out.gapfilled_fasta,
-        ref_ch,
-    )
+
+
+    // GAP_FILL(
+    //     CONTIG_GEN.out.sid,
+    //     ch_sample_input,
+    //     ORDER_AND_ORIENT.out.intermediate_scaffold
+    // )
+
+    // IMPUTE_FROM_REFERENCE(
+    //     CONTIG_GEN.out.sid,
+    //     CHOOSE_BEST_REF.out.chosen_ref,
+    //     GAP_FILL.out.gapfilled_fasta,
+    //     ref_ch,
+    // )
 }
