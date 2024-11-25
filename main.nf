@@ -37,7 +37,7 @@ workflow {
         ch_input
     )
 
-    ref_ch = Channel.fromPath("${params.refs}/*.fa")
+    ref_ch = Channel.fromPath("${params.refs}/*.fa").collect()
 
     inreads = INPUT_CHECK.out.reads
 

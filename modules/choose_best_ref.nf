@@ -14,11 +14,14 @@ process CHOOSE_BEST_REF {
 
     script:
 
+    def skani_ref_input = ref_fastas.join(' ')
+    log.info("${skani_ref_input}")
+
     """
 
     assembly.py skani_contigs_to_refs \\
     ${contigs}  \\
-    ${ref_fastas} \\
+    ${skani_ref_input} \\
     ${sample_id}.refs_skani_dist.full.tsv \\
     ${sample_id}.refs_skani_dist.top.tsv \\
     ${sample_id}.ref_clusters.tsv \\
