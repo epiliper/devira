@@ -2,7 +2,7 @@ process CHOOSE_BEST_REF {
 
     tag "$sample_id"
     label 'process_high'
-    container 'ilepeli/viral_assemble:latest'
+    container 'staphb/skani:0.2.2'
 
     input: 
     val(sample_id)
@@ -14,19 +14,21 @@ process CHOOSE_BEST_REF {
 
     script:
 
-    def skani_ref_input = ref_fastas.join(' ')
-    log.info("${skani_ref_input}")
-
+    // note: misc skani args taken from 
+    // https://github.com/broadinstitute/viral-assemble/blob/master/assembly.py
     """
-
-    assembly.py skani_contigs_to_refs \\
-    ${contigs}  \\
-    ${skani_ref_input} \\
-    ${sample_id}.refs_skani_dist.full.tsv \\
-    ${sample_id}.refs_skani_dist.top.tsv \\
-    ${sample_id}.ref_clusters.tsv \\
-    --loglevel=DEBUG
-
+    skani dist ${contigs} ${ref_fastas} \\
+    -m 50 \\
+    -s 50 \\
+    -c 20 \\
+    --min-af 15 \\
+    --no-learned-ani \\
+    --robust \\
+    --detailed \\
+    --ci \\
+    -n 10 \\
+    --no-marker-index \\
+    -o ${sample_id}.refs_skani_dist.full.tsv
 
     CHOSEN_REF_FASTA=\$(cut -f 1 "${sample_id}.refs_skani_dist.full.tsv" | tail +2 | head -1)
 
