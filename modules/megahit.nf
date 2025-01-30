@@ -19,7 +19,8 @@ process MEGAHIT {
 
     if [ "${meta.single_end}" = true ]; then
         megahit \\
-        ${reads} \\
+        -r ${reads} \\
+        --presets meta-sensitive \\
         -o ${meta.id}
 
     else
