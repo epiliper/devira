@@ -54,7 +54,6 @@ def fastaMaker(seqs, linewidth=60):
 
 fs = FeatureSorter()
 
-
 def contig_chooser(alt_seqs, ref_len, coords_debug=""):
     """Our little heuristic to choose an alternative sequence from a pile
     of alignments to a reference. Takes a list of strings (one string per
@@ -196,70 +195,70 @@ def get_best_from_tiling(
                 subprocess.check_call(toolCmd, stdout=outf)
             alnReaders[chr_pair] = AlignsReader(aln_file, ref_file)
 
-            with open(out_scaffolds_fasta, "wt") as outf:
-                for c in [seqObj.id for seqObj in Bio.SeqIO.parse(ref_file, "fasta")]:
-                    if c not in fs.get_seqids():
-                        # old: continue
-                        log.FATAL("ref for contig not found")
+    with open(out_scaffolds_fasta, "wt") as outf:
+        for c in [seqObj.id for seqObj in Bio.SeqIO.parse(ref_file, "fasta")]:
+            if c not in fs.get_seqids():
+                # old: continue
+                log.FATAL("ref for contig not found")
 
-                    def n_diff_vals(*vals):
-                        return len(set(vals))
+            def n_diff_vals(*vals):
+                return len(set(vals))
 
-                    def n_diff_lens(seqs):
-                        return n_diff_vals(*map(len, seqs))
+            def n_diff_lens(seqs):
+                return n_diff_vals(*map(len, seqs))
 
-                    def frac_unambig(seqs):
-                        """Given a list of seqs of the same length, return the fraction of positions on which they all agree"""
-                        n_tot = len(seqs[0])
-                        n_unambig = list(map(n_diff_vals, *seqs)).count(1)
-                        return float(n_unambig) / float(n_tot or 1.0)
+            def frac_unambig(seqs):
+                """Given a list of seqs of the same length, return the fraction of positions on which they all agree"""
+                n_tot = len(seqs[0])
+                n_unambig = list(map(n_diff_vals, *seqs)).count(1)
+                return float(n_unambig) / float(n_tot or 1.0)
 
-                    # construct scaffolded sequence for this chromosome
-                    seq = []
-                    for _, left, right, n_features, features in fs.get_intervals(c):
-                        # get all proposed sequences for this specific region
-                        alt_seqs = []
-                        for consider_ambig_aligns in (False, True):
-                            for f in features:
-                                alt_seqs_f = alnReaders[
-                                    (c, f[-1][0])
-                                ].retrieve_alts_by_ref(
-                                    left, right, aln_start=f[1], aln_stop=f[2]
+            # construct scaffolded sequence for this chromosome
+            seq = []
+            for _, left, right, n_features, features in fs.get_intervals(c):
+                # get all proposed sequences for this specific region
+                alt_seqs = []
+                for consider_ambig_aligns in (False, True):
+                    for f in features:
+                        alt_seqs_f = alnReaders[
+                            (c, f[-1][0])
+                        ].retrieve_alts_by_ref(
+                            left, right, aln_start=f[1], aln_stop=f[2]
+                        )
+                        if len(alt_seqs_f) == 1:
+                            alt_seqs.append(alt_seqs_f[0])
+                        elif consider_ambig_aligns:
+                            if (
+                                len(alt_seqs_f) <= ambig_max_aligns
+                                and n_diff_lens(alt_seqs_f) <= ambig_max_lens
+                                and frac_unambig(alt_seqs_f)
+                                > (1.0 - ambig_max_frac)
+                            ):
+                                alt_seqs.append(alt_seqs_f[0])
+                                log.info(
+                                    "using ambiguous alignment to ref seq {} at [{},{}]".format(
+                                        c, f[1], f[2]
+                                    )
                                 )
-                                if len(alt_seqs_f) == 1:
-                                    alt_seqs.append(alt_seqs_f[0])
-                                elif consider_ambig_aligns:
-                                    if (
-                                        len(alt_seqs_f) <= ambig_max_aligns
-                                        and n_diff_lens(alt_seqs_f) <= ambig_max_lens
-                                        and frac_unambig(alt_seqs_f)
-                                        > (1.0 - ambig_max_frac)
-                                    ):
-                                        alt_seqs.append(alt_seqs_f[0])
-                                        log.info(
-                                            "using ambiguous alignment to ref seq {} at [{},{}]".format(
-                                                c, f[1], f[2]
-                                            )
-                                        )
-                                    else:
-                                        log.warning(
-                                            "dropping ambiguous alignment to ref seq {} at [{},{}]".format(
-                                                c, f[1], f[2]
-                                            )
-                                        )
-                            if alt_seqs:
-                                # if have a non-unambiguous alignment, don't consider ambiguous ones
-                                break
+                            else:
+                                log.warning(
+                                    "dropping ambiguous alignment to ref seq {} at [{},{}]".format(
+                                        c, f[1], f[2]
+                                    )
+                                )
+                    if alt_seqs:
+                        # if have a non-unambiguous alignment, don't consider ambiguous ones
+                        break
 
-                    # pick the "right" one and glue together into a chromosome
-                    ranked_unique_seqs = contig_chooser(
-                        alt_seqs, right - left + 1, "%s:%d-%d" % (c, left, right)
-                    )
-                    seq.append(ranked_unique_seqs[0])
-                    for line in fastaMaker(
-                        [(str(c) + "_contigs_ordered_and_oriented", "".join(seq))]
-                    ):
-                        outf.write(line)
+            # pick the "right" one and glue together into a chromosome
+            ranked_unique_seqs = contig_chooser(
+                alt_seqs, right - left + 1, "%s:%d-%d" % (c, left, right)
+            )
+            seq.append(ranked_unique_seqs[0])
+            for line in fastaMaker(
+                [(str(c) + "_contigs_ordered_and_oriented", "".join(seq))]
+            ):
+                outf.write(line)
 
 
 if __name__ == "__main__":

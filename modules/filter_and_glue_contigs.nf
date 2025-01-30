@@ -1,4 +1,4 @@
-process FILTER_CONTIGS {
+process FILTER_AND_GLUE_CONTIGS {
 
     tag "$sample_id"
     label "process_low"
@@ -19,7 +19,7 @@ process FILTER_CONTIGS {
 
     reference_fasta=\$(cat ${chosen_ref})
 
-    select_best_mummer_contigs.py \\
+    filter_and_glue_contigs.py \\
     ${mummer_tile_file} \\
     \$reference_fasta \\
     ${mummer_delta_file} \\

@@ -16,7 +16,7 @@ include { ORDER_AND_ORIENT } from './modules/order_and_orient'
 include { GAP_FILL } from './modules/gap_fill'
 include { IMPUTE_FROM_REFERENCE } from './modules/impute_from_reference'
 include { MUMMER } from './modules/mummer'
-include { FILTER_CONTIGS } from './modules/filter_contigs'
+include { FILTER_AND_GLUE_CONTIGS } from './modules/filter_and_glue_contigs.nf'
 
 
 
@@ -101,7 +101,7 @@ workflow {
         ref_ch
     )
 
-    FILTER_CONTIGS(
+    FILTER_AND_GLUE_CONTIGS(
         CONTIG_GEN.out.sid,
         MUMMER.out.tile,
         CHOOSE_BEST_REF.out.chosen_ref,
