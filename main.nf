@@ -65,13 +65,11 @@ workflow {
         KRAKEN2 (
             ch_sample_input,
             file(params.kraken2_db),
-            params.kraken2_variants_host_filter || params.kraken2_assembly_host_filter,
-            params.kraken2_variants_host_filter || params.kraken2_assembly_host_filter,
+            true,
+            false
         )
 
-        if (params.kraken2_variants_host_filter) {
-            ch_sample_input = KRAKEN2.out.unclassified_reads_fastq
-        }
+        ch_sample_input = KRAKEN2.out.classified_reads_fastq
     }
 
     if (!params.skip_dedup) {
