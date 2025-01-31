@@ -10,8 +10,7 @@ process METASPADES {
 
 
     output:
-    path("contigs.fasta"), emit: contigs_fasta
-    val("${meta.id}"), emit: sample_id
+    tuple val("${meta.id}"), path("contigs.fasta"), emit: contigs
 
     script: 
 

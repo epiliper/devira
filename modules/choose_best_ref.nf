@@ -5,12 +5,11 @@ process CHOOSE_BEST_REF {
     container 'staphb/skani:0.2.2'
 
     input: 
-    val(sample_id)
-    path(contigs)
+    tuple val(sample_id), path(contigs)
     path(ref_fastas)
 
     output: 
-    path("./CHOSEN_REF"), emit: chosen_ref
+    tuple val(sample_id), path(contigs), path("./CHOSEN_REF"), emit: chosen_ref
 
     script:
 

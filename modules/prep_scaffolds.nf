@@ -4,13 +4,16 @@ process PREP_SCAFFOLDS {
     container 'ilepeli/adar:0.0.2'
 
     input:
-    val(sample_id)
-    path(intermediate_contigs)
-    path(chosen_ref)
+    tuple (
+            val(sample_id),
+            path(intermediate_contigs),
+            path(chosen_ref)
+          )
+
     path(ref_ch)
 
     output:
-    path("*_imputed_scaffolds.fasta"), emit: prep_scaffolds
+    path("*imputed_assembly.fasta"), emit: prep_scaffolds
 
     script:
 
@@ -26,7 +29,7 @@ process PREP_SCAFFOLDS {
         \${prefix}_filtered.delta \\
         $intermediate_contigs \\
         \$reference_fasta \\
-        \${prefix}_imputed_scaffolds.fasta
+        \${prefix}_imputed_assembly.fasta
 
     """
 

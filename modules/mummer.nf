@@ -4,14 +4,12 @@ process MUMMER {
     container 'ilepeli/adar:0.0.2'
 
     input: 
-    val(sample_id)
-    path(contigs_fasta)
-    path(chosen_ref)
+    tuple val(sample_id), path(contigs_fasta), path(chosen_ref)
     path(ref_ch)
 
     output:
-    path("${sample_id}_post_filter.delta"), emit: delta
-    path("${sample_id}.tiling"), emit: tile
+
+    tuple val(sample_id), path("${sample_id}_post_filter.delta"), path("${sample_id}.tiling"), path(chosen_ref), emit: delta_tile
 
     script:
 

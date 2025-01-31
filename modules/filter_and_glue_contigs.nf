@@ -6,14 +6,12 @@ process FILTER_AND_GLUE_CONTIGS {
     container 'ilepeli/adar:0.0.2'
 
     input: 
-    val(sample_id)
-    path(mummer_tile_file)
-    path(chosen_ref)
+
+    tuple val(sample_id), path(mummer_delta_file), path(mummer_tile_file), path(chosen_ref)
     path(ref_ch)
-    path(mummer_delta_file)
 
     output:
-    path("*intermediate_scaffold.fasta"), emit: scaffold
+    tuple val(sample_id), path("*intermediate_scaffold.fasta"), path(chosen_ref), emit: intermediate_scaffold
 
 
     script:

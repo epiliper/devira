@@ -87,32 +87,34 @@ workflow {
     )
 
     CHOOSE_BEST_REF(
-        CONTIG_GEN.out.sid,
         CONTIG_GEN.out.contigs,
         ref_ch
     )
 
     // ORDER_AND_ORIENT(
     MUMMER(
-        CONTIG_GEN.out.sid,
-        CONTIG_GEN.out.contigs,
         CHOOSE_BEST_REF.out.chosen_ref,
         ref_ch
     )
 
     FILTER_AND_GLUE_CONTIGS(
-        CONTIG_GEN.out.sid,
-        MUMMER.out.tile,
-        CHOOSE_BEST_REF.out.chosen_ref,
-        ref_ch,
-        MUMMER.out.delta,
+        MUMMER.out.delta_tile,
+        ref_ch
+        // CONTIG_GEN.out.sid,
+        // MUMMER.out.tile,
+        // CHOOSE_BEST_REF.out.chosen_ref,
+        // ref_ch,
+        // MUMMER.out.delta,
     )
 
     PREP_SCAFFOLDS(
-        CONTIG_GEN.out.sid,
-        FILTER_AND_GLUE_CONTIGS.out.scaffold,
-        CHOOSE_BEST_REF.out.chosen_ref,
+        FILTER_AND_GLUE_CONTIGS
+        .out
+        .intermediate_scaffold,
         ref_ch
+        // CONTIG_GEN.out.sid,
+        // FILTER_AND_GLUE_CONTIGS.out.scaffold,
+        // CHOOSE_BEST_REF.out.chosen_ref,
     )
 
 

@@ -15,8 +15,7 @@ workflow CONTIG_GEN {
                reads_meta,
               )
 
-    contigs = MEGAHIT.out.contigs_fasta
-    sid = MEGAHIT.out.sample_id
+    contigs = MEGAHIT.out.contigs
 
    } 
 
@@ -26,8 +25,7 @@ workflow CONTIG_GEN {
                reads_meta,
                )
     
-    contigs = METASPADES.out.contigs_fasta
-    sid = METASPADES.out.sample_id
+    contigs = METASPADES.out.contigs
 
    }
 
@@ -38,6 +36,5 @@ workflow CONTIG_GEN {
 
    emit: 
    contigs = contigs
-   sid     = sid
 
 }

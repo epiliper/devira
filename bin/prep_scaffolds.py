@@ -74,7 +74,7 @@ def modify_contigs(infile, ref, query, outfile):
     with open(outfile, "wt") as f:
         name = aln[consensus_idx].name
 
-        f.write(f"<{name}\n")
+        f.write(f">{name}\n")
         f.write(mc.get_stripped_consensus())
 
 class ContigModifier(object):
