@@ -12,18 +12,22 @@ process FILTER_AND_GLUE_CONTIGS {
     path(ref_ch)
     path(mummer_delta_file)
 
+    output:
+    path("*intermediate_scaffold.fasta"), emit: scaffold
+
 
     script:
 
     """
 
     reference_fasta=\$(cat ${chosen_ref})
+    ref_name=\${reference_fasta%.*}
 
     filter_and_glue_contigs.py \\
     ${mummer_tile_file} \\
     \$reference_fasta \\
     ${mummer_delta_file} \\
-    --out_scaffold_name ${sample_id}_intermediate_scaffold.fasta
+    --out_scaffold_name "${sample_id}_\${ref_name}_intermediate_scaffold.fasta"
 
     """
 

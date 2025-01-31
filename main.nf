@@ -16,7 +16,8 @@ include { ORDER_AND_ORIENT } from './modules/order_and_orient'
 include { GAP_FILL } from './modules/gap_fill'
 include { IMPUTE_FROM_REFERENCE } from './modules/impute_from_reference'
 include { MUMMER } from './modules/mummer'
-include { FILTER_AND_GLUE_CONTIGS } from './modules/filter_and_glue_contigs.nf'
+include { FILTER_AND_GLUE_CONTIGS } from './modules/filter_and_glue_contigs'
+include { PREP_SCAFFOLDS } from './modules/prep_scaffolds'
 
 
 
@@ -37,7 +38,7 @@ workflow {
         ch_input
     )
 
-    ref_ch = Channel.fromPath("${params.refs}/*.fa").collect()
+    ref_ch = Channel.fromPath("${params.refs}/*.fasta").collect()
 
     inreads = INPUT_CHECK.out.reads
 
@@ -105,6 +106,13 @@ workflow {
         CHOOSE_BEST_REF.out.chosen_ref,
         ref_ch,
         MUMMER.out.delta,
+    )
+
+    PREP_SCAFFOLDS(
+        CONTIG_GEN.out.sid,
+        FILTER_AND_GLUE_CONTIGS.out.scaffold,
+        CHOOSE_BEST_REF.out.chosen_ref,
+        ref_ch
     )
 
 
