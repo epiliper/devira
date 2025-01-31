@@ -9,7 +9,7 @@ process CHOOSE_BEST_REF {
     path(ref_fastas)
 
     output: 
-    tuple val(sample_id), path(contigs), path("./CHOSEN_REF"), emit: chosen_ref
+    tuple val(sample_id), path(contigs), path("*_**REF**.fasta"), emit: chosen_ref
 
     script:
 
@@ -30,8 +30,7 @@ process CHOOSE_BEST_REF {
     -o ${sample_id}.refs_skani_dist.full.tsv
 
     CHOSEN_REF_FASTA=\$(cut -f 1 "${sample_id}.refs_skani_dist.full.tsv" | tail +2 | head -1)
-
-    echo "\$CHOSEN_REF_FASTA" > CHOSEN_REF
+    cp \$CHOSEN_REF_FASTA \${CHOSEN_REF_FASTA%*.}_**REF**.fasta
 
     """
 }

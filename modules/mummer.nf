@@ -5,7 +5,6 @@ process MUMMER {
 
     input: 
     tuple val(sample_id), path(contigs_fasta), path(chosen_ref)
-    path(ref_ch)
 
     output:
 
@@ -14,11 +13,10 @@ process MUMMER {
     script:
 
     """
-    chosen_ref=\$(cat ${chosen_ref})
 
     touch ${sample_id}_post_filter.delta
 
-    nucmer --prefix ${sample_id}_pre_filter --maxgap 200 --minmatch 10 \$chosen_ref ${contigs_fasta}
+    nucmer --prefix ${sample_id}_pre_filter --maxgap 200 --minmatch 10 $chosen_ref ${contigs_fasta}
 
     delta-filter ${sample_id}_pre_filter.delta > ${sample_id}_post_filter.delta
 
