@@ -250,15 +250,16 @@ def get_best_from_tiling(
                         # if have a non-unambiguous alignment, don't consider ambiguous ones
                         break
 
-            # pick the "right" one and glue together into a chromosome
-            ranked_unique_seqs = contig_chooser(
-                alt_seqs, right - left + 1, "%s:%d-%d" % (c, left, right)
-            )
-            seq.append(ranked_unique_seqs[0])
-            for line in fastaMaker(
-                [(str(c) + "_contigs_ordered_and_oriented", "".join(seq))]
-            ):
-                outf.write(line)
+                # pick the "right" one and glue together into a chromosome
+                ranked_unique_seqs = contig_chooser(
+                    alt_seqs, right - left + 1, "%s:%d-%d" % (c, left, right)
+                )
+                seq.append(ranked_unique_seqs[0])
+
+        for line in fastaMaker(
+            [(str(c) + "_contigs_ordered_and_oriented", "".join(seq))]
+        ):
+            outf.write(line)
 
 
 if __name__ == "__main__":
