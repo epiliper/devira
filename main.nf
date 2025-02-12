@@ -3,21 +3,20 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'No sampleshe
 if (!params.refs) { exit 1, "Reference genome multifasta not specified!" }
 if (params.run_kraken2 & params.kraken2_db == null ) {exit 1, "Must provide a kraken2 database with --kraken2_db!" }
 
-include { INPUT_CHECK } from './subworkflows/input_check'
-include { KRAKEN2 } from './modules/kraken2'
-include { FASTP_MULTIQC } from './subworkflows/fastp_multiqc'
-include { CD_HIT_DUP } from './modules/cd_hit_dup'
-include { SUBSAMPLE_FASTQ } from './modules/subsample'
+// Import subworkflows
+include { INPUT_CHECK               } from './subworkflows/input_check'
+include { FASTP_MULTIQC             } from './subworkflows/fastp_multiqc'
+include { CONTIG_GEN                } from './subworkflows/contig_gen'
 
-include { CONTIG_GEN } from './subworkflows/contig_gen'
-
-include { CHOOSE_BEST_REF } from './modules/choose_best_ref'
-include { ORDER_AND_ORIENT } from './modules/order_and_orient'
-include { GAP_FILL } from './modules/gap_fill'
-include { IMPUTE_FROM_REFERENCE } from './modules/impute_from_reference'
-include { MUMMER } from './modules/mummer'
-include { FILTER_AND_GLUE_CONTIGS } from './modules/filter_and_glue_contigs'
-include { FILL_GAPS_WITH_REFERENCE } from './modules/fill_gaps_w_ref'
+// Import modules
+include { KRAKEN2                   } from './modules/kraken2'
+include { CD_HIT_DUP                } from './modules/cd_hit_dup'
+include { SUBSAMPLE_FASTQ           } from './modules/subsample'
+include { CHOOSE_BEST_REF           } from './modules/choose_best_ref'
+include { ORDER_AND_ORIENT          } from './modules/order_and_orient'
+include { MUMMER                    } from './modules/mummer'
+include { FILTER_AND_GLUE_CONTIGS   } from './modules/filter_and_glue_contigs'
+include { GAPFILL_GAP2SEQ           } from './modules/gapfill_gap2seq'
 
 
 
@@ -100,9 +99,17 @@ workflow {
         MUMMER.out.delta_tile
     )
 
-    FILL_GAPS_WITH_REFERENCE(
+    GAPFILL_GAP2SEQ(
         FILTER_AND_GLUE_CONTIGS
         .out
         .intermediate_scaffold
+        .join(ch_sample_input, by: [0])
     )
+
+    // FILL_GAPS_WITH_REFERENCE(
+    //     FILTER_AND_GLUE_CONTIGS
+    //     .out
+    //     .intermediate_scaffold
+    // )
+
 }

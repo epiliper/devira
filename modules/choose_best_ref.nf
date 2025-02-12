@@ -1,21 +1,25 @@
 process CHOOSE_BEST_REF {
 
-    tag "$sample_id"
+    tag "$meta.id"
     label 'process_high'
     container 'staphb/skani:0.2.2'
 
     input: 
-    tuple val(sample_id), path(contigs)
+    tuple val(meta), path(contigs)
     path(ref_fastas)
 
     output: 
-    tuple val(sample_id), path(contigs), path("*_**REF**.fasta"), emit: chosen_ref
+    tuple val(meta), path(contigs), path("*_**REF**.fasta"), emit: chosen_ref
+
 
     script:
+
+    def prefix = "${meta.id}"
 
     // note: misc skani args taken from 
     // https://github.com/broadinstitute/viral-assemble/blob/master/assembly.py
     """
+
     skani dist ${contigs} ${ref_fastas} \\
     -m 50 \\
     -s 50 \\
@@ -27,9 +31,9 @@ process CHOOSE_BEST_REF {
     --ci \\
     -n 10 \\
     --no-marker-index \\
-    -o ${sample_id}.refs_skani_dist.full.tsv
+    -o ${prefix}.refs_skani_dist.full.tsv
 
-    CHOSEN_REF_FASTA=\$(cut -f 1 "${sample_id}.refs_skani_dist.full.tsv" | tail +2 | head -1)
+    CHOSEN_REF_FASTA=\$(cut -f 1 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1)
     cp \$CHOSEN_REF_FASTA \${CHOSEN_REF_FASTA%*.}_**REF**.fasta
 
     """

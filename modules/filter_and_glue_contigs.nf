@@ -1,19 +1,20 @@
 process FILTER_AND_GLUE_CONTIGS {
 
-    tag "$sample_id"
+    tag "$meta.id"
     label "process_low"
     // container 'pegi3s/biopython:1.78'
     container 'ilepeli/adar:0.0.2'
 
     input: 
 
-    tuple val(sample_id), path(mummer_delta_file), path(mummer_tile_file), path(chosen_ref)
+    tuple val(meta), path(mummer_delta_file), path(mummer_tile_file), path(chosen_ref)
 
     output:
-    tuple val(sample_id), path("*intermediate_scaffold.fasta"), path(chosen_ref), emit: intermediate_scaffold
-
+    tuple val(meta), path("*intermediate_scaffold.fasta"), path(chosen_ref), emit: intermediate_scaffold
 
     script:
+
+    def prefix = "${meta.id}"
 
     """
 
@@ -24,7 +25,7 @@ process FILTER_AND_GLUE_CONTIGS {
     ${mummer_tile_file} \\
     $chosen_ref \\
     ${mummer_delta_file} \\
-    --out_scaffold_name "${sample_id}_\${ref_name}_intermediate_scaffold.fasta"
+    --out_scaffold_name "${prefix}_\${ref_name}_intermediate_scaffold.fasta"
 
     """
 

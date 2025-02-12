@@ -10,7 +10,7 @@ process MEGAHIT {
 
 
     output:
-    tuple val("${meta.id}"), path("${meta.id}/final.contigs.fa"), emit: contigs
+    tuple val(meta), path("${meta.id}/final.contigs.fa"), emit: contigs
 
     script: 
 

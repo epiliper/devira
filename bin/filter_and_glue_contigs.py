@@ -261,7 +261,6 @@ def get_best_from_tiling(
         ):
             outf.write(line)
 
-
 if __name__ == "__main__":
     get_best_from_tiling(
         args.tile_file,
