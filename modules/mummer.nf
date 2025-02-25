@@ -1,7 +1,7 @@
 process MUMMER {
     tag "$meta.id"
     label 'process_high'
-    container 'ilepeli/adar:0.0.2'
+    container 'quay.io/epil02/adar:0.0.4'
 
     input: 
     tuple val(meta), path(contigs_fasta), path(chosen_ref)

@@ -9,12 +9,11 @@ process CHOOSE_BEST_REF {
     path(ref_fastas)
 
     output: 
-    tuple val(meta), path(contigs), path("*_**REF**.fasta"), emit: chosen_ref
+    tuple val(meta), path(contigs), path("*_ref.fasta"), emit: chosen_ref
 
 
     script:
-
-    def prefix = "${meta.id}"
+    def prefix = task.ext.prefix ?: ''
 
     // note: misc skani args taken from 
     // https://github.com/broadinstitute/viral-assemble/blob/master/assembly.py
@@ -34,7 +33,7 @@ process CHOOSE_BEST_REF {
     -o ${prefix}.refs_skani_dist.full.tsv
 
     CHOSEN_REF_FASTA=\$(cut -f 1 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1)
-    cp \$CHOSEN_REF_FASTA \${CHOSEN_REF_FASTA%*.}_**REF**.fasta
+    cp \$CHOSEN_REF_FASTA \${CHOSEN_REF_FASTA%*.}_ref.fasta
 
     """
 }

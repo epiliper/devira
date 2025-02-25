@@ -2,8 +2,7 @@ process FILTER_AND_GLUE_CONTIGS {
 
     tag "$meta.id"
     label "process_low"
-    // container 'pegi3s/biopython:1.78'
-    container 'ilepeli/adar:0.0.2'
+    container 'quay.io/epil02/adar:0.0.4'
 
     input: 
 

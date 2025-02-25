@@ -7,6 +7,7 @@ if (params.run_kraken2 & params.kraken2_db == null ) {exit 1, "Must provide a kr
 include { INPUT_CHECK               } from './subworkflows/input_check'
 include { FASTP_MULTIQC             } from './subworkflows/fastp_multiqc'
 include { CONTIG_GEN                } from './subworkflows/contig_gen'
+include { PROFILE_READS             } from './subworkflows/profile_reads'
 
 // Import modules
 include { KRAKEN2                   } from './modules/kraken2'
@@ -17,8 +18,6 @@ include { ORDER_AND_ORIENT          } from './modules/order_and_orient'
 include { MUMMER                    } from './modules/mummer'
 include { FILTER_AND_GLUE_CONTIGS   } from './modules/filter_and_glue_contigs'
 include { GAPFILL_GAP2SEQ           } from './modules/gapfill_gap2seq'
-
-
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -61,16 +60,13 @@ workflow {
 
     ch_sample_input = FASTP_MULTIQC.out.reads
 
-    if (params.run_kraken2) {
-        KRAKEN2 (
-            ch_sample_input,
-            file(params.kraken2_db),
-            true,
-            false
-        )
+    PROFILE_READS(
+        ch_sample_input,
+        file(params.kraken2_db),
+        file(params.taxids)
+    )
 
-        ch_sample_input = KRAKEN2.out.classified_reads_fastq
-    }
+    ch_sample_input = PROFILE_READS.out.profiled_reads
 
     if (!params.skip_dedup) {
 
@@ -90,7 +86,6 @@ workflow {
         ref_ch
     )
 
-    // ORDER_AND_ORIENT(
     MUMMER(
         CHOOSE_BEST_REF.out.chosen_ref
     )
@@ -105,11 +100,4 @@ workflow {
         .intermediate_scaffold
         .join(ch_sample_input, by: [0])
     )
-
-    // FILL_GAPS_WITH_REFERENCE(
-    //     FILTER_AND_GLUE_CONTIGS
-    //     .out
-    //     .intermediate_scaffold
-    // )
-
 }
