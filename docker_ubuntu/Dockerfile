@@ -13,6 +13,7 @@ ENV PATH=$PATH:/usr/local/bin
 RUN apt-get update && apt-get install -y --no-install-recommends \
   wget \
   git \
+  bc \
   libncurses5-dev \
   libbz2-dev \
   liblzma-dev \
