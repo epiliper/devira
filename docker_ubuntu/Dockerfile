@@ -5,6 +5,7 @@ LABEL maintainer "epil02@uw.edu"
 ARG BIOPYTHON_VERSION=1.78
 ARG MUMMER_VER="4.0.0"
 ARG GAP2SEQ_VER="3.1"
+ARG SAMTOOLS_VER="1.15"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH=$PATH:/usr/local/bin
@@ -65,5 +66,13 @@ RUN wget https://github.com/rikuu/Gap2Seq/releases/download/v${GAP2SEQ_VER}/gap2
   mv gap2seq-${GAP2SEQ_VER}-x64-linux/* /usr/local/bin
 
 RUN Gap2Seq -h
+
+# install samtools
+RUN wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VER}/samtools-${SAMTOOLS_VER}.tar.bz2 \
+    && tar xjvf samtools-${SAMTOOLS_VER}.tar.bz2 \
+    && cd samtools-${SAMTOOLS_VER} \
+    && ./configure \
+    && make \
+    && make install
 
 CMD ["bash"]
