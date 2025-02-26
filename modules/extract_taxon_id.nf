@@ -1,6 +1,6 @@
 process EXTRACT_TAXON_ID {
     tag "$meta.id - $taxid"
-    label 'process_high'
+    label 'process_single'
     container 'quay.io/epil02/adar:0.0.4'
 
     input:
