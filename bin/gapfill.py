@@ -63,10 +63,10 @@ def gapfill(in_scaffold, in_fastq, out_scaffold, solid_kmer_thresholds=[3], kmer
             for kmer_size in kmer_sizes:
 
                 if not any('N'*min_gap_to_close in str(rec.seq) for rec in Bio.SeqIO.parse(prev_scaffold, 'fasta')):
-                    # log.info('no gaps left, quittting gap2seq early')
+                    print('no gaps left, quittting gap2seq early')
                     break
                 if time.time() > stop_time:
-                    # log.info('Time limit for gap closing reached')
+                    print('Time limit for gap closing reached')
                     break
 
                 filled_scaffold = 'gap2seq-filled.s{}.k{}.fasta'.format(kmer_thres, kmer_size)
