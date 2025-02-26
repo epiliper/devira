@@ -17,7 +17,8 @@ include { CHOOSE_BEST_REF           } from './modules/choose_best_ref'
 include { ORDER_AND_ORIENT          } from './modules/order_and_orient'
 include { MUMMER                    } from './modules/mummer'
 include { FILTER_AND_GLUE_CONTIGS   } from './modules/filter_and_glue_contigs'
-include { GAPFILL_GAP2SEQ           } from './modules/gapfill_gap2seq'
+include { GAPFILL_WITH_READS        } from './modules/gapfill_with_reads'
+include { GAPFILL_WITH_REF          } from './modules/gapfill_with_ref'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -94,10 +95,18 @@ workflow {
         MUMMER.out.delta_tile
     )
 
-    GAPFILL_GAP2SEQ(
+    GAPFILL_WITH_READS(
         FILTER_AND_GLUE_CONTIGS
         .out
         .intermediate_scaffold
         .join(ch_sample_input, by: [0])
+    )
+
+    GAPFILL_WITH_READS.out.gapfilled_scaffold
+    .map { meta, scaf, ref, reads -> [ meta, scaf, ref ] }
+    .set { ref_fill_ch }
+
+    GAPFILL_WITH_REF(
+        ref_fill_ch
     )
 }
