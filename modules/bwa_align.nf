@@ -8,7 +8,7 @@ process BWA_MEM2_ALIGN {
 
     output:
     tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"), emit: bam
-    tuple val(meta), val(ref_name), path(ref),                                      emit: ref
+    tuple val(meta), path(ref), val(ref_name),                                      emit: ref
     tuple val(meta), path(fastq),                                                   emit: reads
     tuple val(meta), path("*_failed_assembly.tsv"), optional: true,                 emit: failed_assembly
     tuple val(meta), val(ref_name), path("*_covstats.tsv"), optional: true,         emit: covstats
@@ -18,7 +18,7 @@ process BWA_MEM2_ALIGN {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: ''
+    def prefix = "${meta.id}_${ref_name}"
     def input = meta.single_end ? "${fastq}" : "${fastq[0]} ${fastq[1]}"
     def iter = task.ext.iter
 
@@ -36,10 +36,11 @@ process BWA_MEM2_ALIGN {
     bwa-mem2 index $ref
 
     ## run bwa-mem2 
-    bwa-mem2 mem \
-        $ref \
-        $input \
-        -t $task.cpus \
+    bwa-mem2 mem \\
+        $ref \\
+        -R "@RG\tID:${prefix}\tSM:${meta.id}\tPL:ILLUMINA\tLB:lib1\tPU:${prefix}" \\
+        $input \\
+        -t $task.cpus \\
         | samtools view -bS -F \$FLAG -@ $task.cpus > ${prefix}.bam
 
     # check if alignment is above depth/coverage thresholds
