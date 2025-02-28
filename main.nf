@@ -19,6 +19,7 @@ include { MUMMER                    } from './modules/mummer'
 include { FILTER_AND_GLUE_CONTIGS   } from './modules/filter_and_glue_contigs'
 include { GAPFILL_WITH_READS        } from './modules/gapfill_with_reads'
 include { GAPFILL_WITH_REF          } from './modules/gapfill_with_ref'
+include { BWA_MEM2_ALIGN            } from './modules/bwa_align'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -87,8 +88,17 @@ workflow {
         ref_ch
     )
 
+    CHOOSE_BEST_REF.out.ref_name
+    .map {meta, ref_file-> def ref_name = ref_file.text.trim() 
+    return [meta, ref_name] }
+    .set { ref_name_ch }
+
+    CHOOSE_BEST_REF.out.chosen_ref.join(
+        ref_name_ch
+    ).set { contig_prep_ch }
+
     MUMMER(
-        CHOOSE_BEST_REF.out.chosen_ref
+        contig_prep_ch
     )
 
     FILTER_AND_GLUE_CONTIGS(
@@ -102,11 +112,14 @@ workflow {
         .join(ch_sample_input, by: [0])
     )
 
-    GAPFILL_WITH_READS.out.gapfilled_scaffold
-    .map { meta, scaf, ref, reads -> [ meta, scaf, ref ] }
-    .set { ref_fill_ch }
 
     GAPFILL_WITH_REF(
-        ref_fill_ch
+        GAPFILL_WITH_READS.out.gapfilled_scaffold
     )
+
+    BWA_MEM2_ALIGN(
+        GAPFILL_WITH_REF.out.prep_scaffold
+    )
+
+
 }

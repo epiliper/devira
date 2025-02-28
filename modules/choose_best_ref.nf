@@ -10,7 +10,7 @@ process CHOOSE_BEST_REF {
 
     output: 
     tuple val(meta), path(contigs), path("*_ref.fasta"), emit: chosen_ref
-
+    tuple val(meta), path("REF_NAME"), emit: ref_name
 
     script:
     def prefix = task.ext.prefix ?: ''
@@ -35,5 +35,7 @@ process CHOOSE_BEST_REF {
     CHOSEN_REF_FASTA=\$(cut -f 1 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1)
     cp \$CHOSEN_REF_FASTA \${CHOSEN_REF_FASTA%*.}_ref.fasta
 
+    ref_name=\$(cat \$CHOSEN_REF_FASTA | grep \\> | tr -d \\> | cut -d ' ' -f 1)
+    echo \$ref_name > REF_NAME
     """
 }
