@@ -13,12 +13,6 @@ include { PROFILE_READS             } from './subworkflows/profile_reads'
 include { KRAKEN2                   } from './modules/kraken2'
 include { CD_HIT_DUP                } from './modules/cd_hit_dup'
 include { SUBSAMPLE_FASTQ           } from './modules/subsample'
-include { CHOOSE_BEST_REF           } from './modules/choose_best_ref'
-include { ORDER_AND_ORIENT          } from './modules/order_and_orient'
-include { MUMMER                    } from './modules/mummer'
-include { FILTER_AND_GLUE_CONTIGS   } from './modules/filter_and_glue_contigs'
-include { GAPFILL_WITH_READS        } from './modules/gapfill_with_reads'
-include { GAPFILL_WITH_REF          } from './modules/gapfill_with_ref'
 include { BWA_MEM2_ALIGN            } from './modules/bwa_align'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
@@ -81,45 +75,10 @@ workflow {
     CONTIG_GEN(
         ch_sample_input,
         params.contig_method,
-    )
-
-    CHOOSE_BEST_REF(
-        CONTIG_GEN.out.contigs,
         ref_ch
     )
 
-    CHOOSE_BEST_REF.out.ref_name
-    .map {meta, ref_file-> def ref_name = ref_file.text.trim() 
-    return [meta, ref_name] }
-    .set { ref_name_ch }
-
-    CHOOSE_BEST_REF.out.chosen_ref.join(
-        ref_name_ch
-    ).set { contig_prep_ch }
-
-    MUMMER(
-        contig_prep_ch
-    )
-
-    FILTER_AND_GLUE_CONTIGS(
-        MUMMER.out.delta_tile
-    )
-
-    GAPFILL_WITH_READS(
-        FILTER_AND_GLUE_CONTIGS
-        .out
-        .intermediate_scaffold
-        .join(ch_sample_input, by: [0])
-    )
-
-
-    GAPFILL_WITH_REF(
-        GAPFILL_WITH_READS.out.gapfilled_scaffold
-    )
-
     BWA_MEM2_ALIGN(
-        GAPFILL_WITH_REF.out.prep_scaffold
+        CONTIG_GEN.out.contigs,
     )
-
-
 }
