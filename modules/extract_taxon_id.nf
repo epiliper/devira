@@ -8,6 +8,7 @@ process EXTRACT_TAXON_ID {
 
     output:
     tuple val(meta), path("*_TAX.fastq.gz"), emit: tax_reads
+    path("*_profile.tsv"), emit: profile_report
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
@@ -36,5 +37,8 @@ process EXTRACT_TAXON_ID {
     else
         echo "Read threshold met: found \$numreads reads"
     fi
+
+    printf "sample\ttaxon_id\tnum_found_reads\n" > ${meta.id}_${taxid}_profile.tsv
+    printf "${meta.id}\t$taxid\t\$numreads\n" >> ${meta.id}_${taxid}_profile.tsv
     """
 }

@@ -36,7 +36,6 @@ workflow PROFILE_READS {
         .combine(tid_ch)
         .set { extract_input_ch }
 
-
     EXTRACT_TAXON_ID(extract_input_ch)
 
     // filter taxonID fastqs to have a significant number of reads
@@ -45,6 +44,14 @@ workflow PROFILE_READS {
         .filter { meta, reads -> reads.name != "FAILED_TAX.fastq.gz" }
         .set { profiled_reads }
 
+    EXTRACT_TAXON_ID.out.profile_report
+    .collectFile(
+        storeDir: "${params.output}/profiles", 
+        name: "${params.run_name}_profile.tsv",
+        keepHeader: true,
+        sort: {file -> file.text}
+    )
+
     emit:
-    profiled_reads
+    profiled_reads          = profiled_reads
 }
