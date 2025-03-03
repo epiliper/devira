@@ -11,6 +11,7 @@ process CALL_CONSENSUS {
     
     script:
     def prefix = "${meta.id}_${ref_name}"
+    def temp_out = "${meta.id}_temp.fasta"
     def consensus = "${prefix}_consensus.fasta"
 
 
@@ -18,7 +19,9 @@ process CALL_CONSENSUS {
     gatk IndexFeatureFile -I $vcf
     gatk FastaAlternateReferenceMaker \\
         -R $ref \\
-        -O $consensus \\
+        -O $temp_out \\
         -V $vcf
+
+    awk '/^>/ {printf "%s\\n", \$0; next} {printf "%s", \$0} END {print ""}' $temp_out > $consensus
     """
 }

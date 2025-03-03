@@ -17,11 +17,15 @@ process GAPFILL_WITH_READS {
     """
     samtools import $fastq_to_bam -o $bam
     scaffold_fasta_path=${scaffold_fasta}
-    out_scaffold=${prefix}_gapfilled.fasta
+    out_scaffold=${prefix}_gapfilled_temp.fasta
+    final_scaffold=${prefix}_gapfilled.fasta
 
     gapfill.py \\
         --in_scaffold $scaffold_fasta \\
         --in_reads $bam \\
         --out_scaffold \$out_scaffold
+
+    awk '/^>/ {printf "%s\\n", \$0; next} {printf "%s", \$0} END {print ""}' \$out_scaffold > \$final_scaffold
+    rm \$out_scaffold
     """
 }
