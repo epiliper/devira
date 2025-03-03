@@ -46,7 +46,7 @@ workflow PROFILE_READS {
 
     EXTRACT_TAXON_ID.out.profile_report
     .collectFile(
-        storeDir: "${params.output}/profiles", 
+        storeDir: "${params.output}", 
         name: "${params.run_name}_profile.tsv",
         keepHeader: true,
         sort: {file -> file.text}
