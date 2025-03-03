@@ -15,6 +15,7 @@ include { CD_HIT_DUP        } from './modules/cd_hit_dup'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
 include { BWA_MEM2_ALIGN    } from './modules/bwa_align'
 include { HAPLOTYPE_CALLER  } from './modules/haplotype_caller'
+include { CALL_CONSENSUS    } from './modules/call_consensus'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -85,5 +86,10 @@ workflow {
     HAPLOTYPE_CALLER(
         BWA_MEM2_ALIGN.out.bam
         .join(BWA_MEM2_ALIGN.out.ref)
+    )
+
+    CALL_CONSENSUS(
+        HAPLOTYPE_CALLER.out.vcf
+        .join(HAPLOTYPE_CALLER.out.gatk_deps)
     )
 }

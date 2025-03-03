@@ -7,7 +7,8 @@ process HAPLOTYPE_CALLER {
     tuple val(meta), path(bam), path(bai), path(ref), val(ref_name)
 
     output:
-    tuple val(meta), path("*.gcvf"), emit: gcvf
+    tuple val(meta), path(ref), val(ref_name), path("*.vcf"), emit: vcf
+    tuple val(meta), path("*.fai"), path("*.dict"), emit: gatk_deps
 
     script:
     def prefix = "${meta.id}_${ref_name}"
@@ -17,7 +18,7 @@ process HAPLOTYPE_CALLER {
     gatk CreateSequenceDictionary -R $ref
 
     gatk HaplotypeCaller -I $bam \\
-        -R $ref -O ${prefix}_calls.gcvf -A AlleleFraction \\
+        -R $ref -O ${prefix}_calls.vcf -A AlleleFraction \\
         --native-pair-hmm-threads ${task.cpus - 1} \\
     """
 }
