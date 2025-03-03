@@ -65,11 +65,10 @@ def modify_contigs(infile, ref, query, outfile):
 
     mc = ContigModifier(str(aln[ref_idx].seq), str(aln[consensus_idx].seq))
     mc.call_reference_ns()
-    mc.trim_ends()
-    mc.replace_5ends(55)
-    mc.replace_3ends(55)
-    mc.replace_end_gaps()
-    mc.replace_end_gaps()
+    # mc.trim_ends()
+    # mc.replace_5ends(55)
+    # mc.replace_3ends(55)
+    # mc.replace_end_gaps()
 
     with open(outfile, "wt") as f:
         name = aln[consensus_idx].name
@@ -95,6 +94,7 @@ class ContigModifier(object):
 
     def call_reference_ns(self):
         for i in range(self.len):
+            ## change: also replace gaps with 
             if self.consensus[i].upper() == "N":
                 self.consensus[i] = self.ref[i]
 
@@ -114,12 +114,13 @@ class ContigModifier(object):
                     self.consensus[i] = "-"
 
     def replace_end_gaps(self):
-        ''' This fills out the ends of the consensus with reference sequence '''
+        # ''' This fills out the ends of the consensus with reference sequence '''
+        '''NEW: This replaces missing ends of consensus with Ns, to avoid ref bias but allow for read-based refinement'''
         for end_iterator in (range(self.len), reversed(range(self.len))):
             for i in end_iterator:
                 if self.consensus[i] != "-":
                     break
-                self.consensus[i] = self.ref[i]
+                self.consensus[i] = "N"
 
     def replace_5ends(self, replace_length):
         ''' This replaces everything within <replace_length> of the ends of the
