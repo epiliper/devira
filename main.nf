@@ -33,7 +33,7 @@ workflow {
         ch_input
     )
 
-    ref_ch = Channel.fromPath("${params.refs}/*.fasta").collect()
+    //ref_ch = Channel.fromPath("${params.refs}/*.fasta").collect()
 
     inreads = INPUT_CHECK.out.reads
 
@@ -76,7 +76,7 @@ workflow {
     CONTIG_GEN(
         ch_sample_input,
         params.contig_method,
-        ref_ch
+        file(params.refs)
     )
 
     BWA_MEM2_ALIGN(

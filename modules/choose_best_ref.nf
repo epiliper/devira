@@ -6,7 +6,7 @@ process CHOOSE_BEST_REF {
 
     input: 
     tuple val(meta), path(contigs)
-    path(ref_fastas)
+    path(ref)
 
     output: 
     tuple val(meta), path(contigs), path("*_ref.fasta"), emit: chosen_ref
@@ -19,7 +19,7 @@ process CHOOSE_BEST_REF {
     // https://github.com/broadinstitute/viral-assemble/blob/master/assembly.py
     """
 
-    skani dist ${contigs} ${ref_fastas} \\
+    skani dist ${contigs} ${ref} \\
     -m 50 \\
     -s 50 \\
     -c 20 \\
@@ -29,13 +29,13 @@ process CHOOSE_BEST_REF {
     --detailed \\
     --ci \\
     -n 10 \\
+    --ri \\
     --no-marker-index \\
     -o ${prefix}.refs_skani_dist.full.tsv
 
-    CHOSEN_REF_FASTA=\$(cut -f 1 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1)
-    cp \$CHOSEN_REF_FASTA \${CHOSEN_REF_FASTA%*.}_ref.fasta
-
-    ref_name=\$(cat \$CHOSEN_REF_FASTA | grep \\> | tr -d \\> | cut -d ' ' -f 1)
+    ref_name=\$(cut -f 6 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1| cut -d ' ' -f 1)
     echo \$ref_name > REF_NAME
+    cat $ref | grep \$ref_name -A 1 > "\${ref_name}_ref.fasta"
+
     """
 }
