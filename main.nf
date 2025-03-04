@@ -14,8 +14,7 @@ include { KRAKEN2           } from './modules/kraken2'
 include { CD_HIT_DUP        } from './modules/cd_hit_dup'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
 include { BWA_MEM2_ALIGN    } from './modules/bwa_align'
-include { HAPLOTYPE_CALLER  } from './modules/haplotype_caller'
-include { CALL_CONSENSUS    } from './modules/call_consensus'
+include { IVAR_CONSENSUS    } from './modules/ivar_consensus'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -32,8 +31,6 @@ workflow {
     INPUT_CHECK (
         ch_input
     )
-
-    //ref_ch = Channel.fromPath("${params.refs}/*.fasta").collect()
 
     inreads = INPUT_CHECK.out.reads
 
@@ -83,13 +80,8 @@ workflow {
         CONTIG_GEN.out.contigs,
     )
 
-    HAPLOTYPE_CALLER(
+    IVAR_CONSENSUS(
         BWA_MEM2_ALIGN.out.bam
         .join(BWA_MEM2_ALIGN.out.ref)
-    )
-
-    CALL_CONSENSUS(
-        HAPLOTYPE_CALLER.out.vcf
-        .join(HAPLOTYPE_CALLER.out.gatk_deps)
     )
 }
