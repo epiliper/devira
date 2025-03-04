@@ -22,6 +22,7 @@ process EXTRACT_TAXON_ID {
         $reads_in \\
         -t $taxid \\
         $reads_out \\
+        --fastq-output \\
         --include-children \\
         --include-parents > /dev/null
 
