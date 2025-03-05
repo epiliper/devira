@@ -25,7 +25,4 @@ process MUMMER {
     show-tiling -a -i 60.0 -l 200 -v 30.0 ${prefix}_post_filter.delta > ${prefix}.tiling
 
     """
-
-
-    
 }
