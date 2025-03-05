@@ -9,8 +9,8 @@ process CHOOSE_BEST_REF {
     path(ref)
 
     output: 
-    tuple val(meta), path(contigs), path("*_ref.fasta"), emit: chosen_ref
-    tuple val(meta), path("REF_NAME"), emit: ref_name
+    tuple val(meta), path(contigs), path("*_ref.fasta"),                 emit: chosen_ref
+    tuple val(meta), path("REF_ACC"), path("REF_DESC"), path("REF_TAG"), emit: ref_info
 
     script:
     def prefix = task.ext.prefix ?: ''
@@ -33,9 +33,16 @@ process CHOOSE_BEST_REF {
     --no-marker-index \\
     -o ${prefix}.refs_skani_dist.full.tsv
 
-    ref_name=\$(cut -f 6 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1| cut -d ' ' -f 1)
-    echo \$ref_name > REF_NAME
-    cat $ref | grep \$ref_name -A 1 > "\${ref_name}_ref.fasta"
+    # gather ref info and store in file
+    ref_acc=\$(cut -f 6 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1| cut -d ' ' -f 1)
+    ref_tag=\$(cut -f 6 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1| cut -d ' ' -f 2)
+    ref_desc=\$(cut -f 6 "${prefix}.refs_skani_dist.full.tsv" | tail +2 | head -1| cut -d ' ' -f 3-)
+    echo \$ref_tag > REF_TAG
+    echo \$ref_desc > REF_DESC
+    echo \$ref_acc > REF_ACC
+
+    # make single fasta from selected ref for downstream work
+    cat $ref | grep \$ref_acc -A 1 > "\${ref_tag}_ref.fasta"
 
     """
 }

@@ -1,26 +1,26 @@
 process BWA_MEM2_ALIGN {
-    tag "${meta.id}_${ref_name}"
+    tag "$task.ext.prefix"
     label 'process_high'
     container 'quay.io/epil02/revica-strm:0.0.4'
 
     input:
-    tuple val(meta), path(fastq), path(ref), val(ref_name)
+    tuple val(meta), val(ref_info), path(ref), path(fastq)
 
     output:
-    tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"), emit: bam
-    tuple val(meta), path(ref), val(ref_name),                                      emit: ref
+    tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"),                emit: bam
+    tuple val(meta), val(ref_info), path(ref),                                      emit: ref
     tuple val(meta), path(fastq),                                                   emit: reads
     tuple val(meta), path("*_failed_assembly.tsv"), optional: true,                 emit: failed_assembly
-    tuple val(meta), val(ref_name), path("*_covstats.tsv"), optional: true,         emit: covstats
+    tuple val(meta), val(ref_info), path("*_covstats.tsv"), optional: true,         emit: covstats
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = "${meta.id}_${ref_name}"
     def input = meta.single_end ? "${fastq}" : "${fastq[0]} ${fastq[1]}"
     def iter = task.ext.iter
+    def prefix = task.ext.prefix
 
     def min_coverage = task.ext.min_coverage
     def min_depth = task.ext.min_depth

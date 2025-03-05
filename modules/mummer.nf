@@ -1,17 +1,17 @@
 process MUMMER {
-    tag "${meta.id}_${ref_name}"
+    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
     label 'process_high'
     container 'quay.io/epil02/adar:0.0.4'
 
     input: 
-    tuple val(meta), path(contigs_fasta), path(chosen_ref), val(ref_name)
+    tuple val(meta), path(contigs_fasta), path(chosen_ref), val(ref_info)
 
     output:
 
-    tuple val(meta), path("*_post_filter.delta"), path("*.tiling"), path(chosen_ref), val(ref_name), emit: delta_tile
+    tuple val(meta), path("*_post_filter.delta"), path("*.tiling"), path(chosen_ref), val(ref_info), emit: delta_tile
 
     script:
-    def prefix = "${meta.id}_${ref_name}"
+    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
 
     """
     sample_id=${meta[0]}

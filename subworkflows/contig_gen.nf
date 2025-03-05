@@ -35,12 +35,17 @@ workflow CONTIG_GEN {
     ref_ch
    )
 
-   CHOOSE_BEST_REF.out.ref_name
-   .map {meta, ref_file-> def ref_name = ref_file.text.trim() 
-   return [meta, ref_name] }
-   .set { ref_name_ch }
+   CHOOSE_BEST_REF.out.ref_info
+   .map { tuple -> 
+         def (meta, ref_acc_f, ref_desc_f, ref_tag_f) = tuple
+         def ref_acc = ref_acc_f.text.trim()
+         def ref_desc = ref_desc_f.text.trim()
+         def ref_tag = ref_tag_f.text.trim()
+         return [meta, [acc: ref_acc, desc: ref_desc, tag: ref_tag]]
+   }
+   .set { ref_info_ch }
    
-   CHOOSE_BEST_REF.out.chosen_ref.join(ref_name_ch)
+   CHOOSE_BEST_REF.out.chosen_ref.join(ref_info_ch)
    .set { contig_prep_ch }
 
    MUMMER(contig_prep_ch)

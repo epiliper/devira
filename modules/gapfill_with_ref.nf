@@ -1,17 +1,17 @@
 process GAPFILL_WITH_REF {
-    tag "$meta.id"
+    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
     label 'process_low'
     container 'ilepeli/adar:0.0.2'
 
     input:
-    tuple val(meta), path(intermediate_contigs), path(chosen_ref), val(ref_name), path(reads)
+    tuple val(meta), path(intermediate_contigs), path(chosen_ref), val(ref_info), path(reads)
 
     output:
-    tuple val(meta), path(reads), path("*_imputed.fasta"), val(ref_name), emit: prep_scaffold
+    tuple val(meta), val(ref_info), path("*_imputed.fasta"), emit: prep_scaffold
 
     script:
 
-    def prefix = "${meta.id}_${ref_name}"
+    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
     """
     nucmer $chosen_ref ${intermediate_contigs} --prefix ${prefix}
     delta-filter ${prefix}.delta > ${prefix}_filtered.delta

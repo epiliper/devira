@@ -4,17 +4,16 @@ if (!params.refs) { exit 1, "Reference genome multifasta not specified!" }
 if (params.run_kraken2 & params.kraken2_db == null ) {exit 1, "Must provide a kraken2 database with --kraken2_db!" }
 
 // Import subworkflows
-include { INPUT_CHECK       } from './subworkflows/input_check'
-include { FASTP_MULTIQC     } from './subworkflows/fastp_multiqc'
-include { CONTIG_GEN        } from './subworkflows/contig_gen'
-include { PROFILE_READS     } from './subworkflows/profile_reads'
+include { INPUT_CHECK           } from './subworkflows/input_check'
+include { FASTP_MULTIQC         } from './subworkflows/fastp_multiqc'
+include { PROFILE_READS         } from './subworkflows/profile_reads'
+include { CONTIG_GEN            } from './subworkflows/contig_gen'
+include { CONSENSUS_ASSEMBLY    } from './subworkflows/consensus_assembly'
 
 // Import modules
 include { KRAKEN2           } from './modules/kraken2'
 include { CD_HIT_DUP        } from './modules/cd_hit_dup'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
-include { BWA_MEM2_ALIGN    } from './modules/bwa_align'
-include { IVAR_CONSENSUS    } from './modules/ivar_consensus'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -76,12 +75,9 @@ workflow {
         file(params.refs)
     )
 
-    BWA_MEM2_ALIGN(
+    CONSENSUS_ASSEMBLY(
         CONTIG_GEN.out.contigs,
+        ch_sample_input
     )
 
-    IVAR_CONSENSUS(
-        BWA_MEM2_ALIGN.out.bam
-        .join(BWA_MEM2_ALIGN.out.ref)
-    )
 }

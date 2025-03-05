@@ -1,17 +1,17 @@
 process GAPFILL_WITH_READS {
-    tag "${meta.id}_${ref_name}"
+    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
     label 'process_high'
     container 'quay.io/epil02/adar:0.0.5'
 
     input: 
-    tuple val(meta), path(scaffold_fasta), path(chosen_ref), val(ref_name), path(reads)
+    tuple val(meta), path(scaffold_fasta), path(chosen_ref), val(ref_info), path(reads)
 
     output:
-    tuple val(meta), path("*gapfilled.fasta"), path(chosen_ref), val(ref_name), path(reads), emit: gapfilled_scaffold
+    tuple val(meta), path("*gapfilled.fasta"), path(chosen_ref), val(ref_info), path(reads), emit: gapfilled_scaffold
 
     script:
     def fastq_to_bam = meta.single_end ? "-0 $reads" : "-1 ${reads[0]} -2 ${reads[1]}"
-    def prefix = "${meta.id}_${ref_name}"
+    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
     def bam = "${prefix}.bam"
 
     """

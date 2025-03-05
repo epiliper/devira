@@ -1,15 +1,15 @@
 process IVAR_CONSENSUS {
-    tag "${meta.id}_${ref_name}"
+    tag "${task.ext.prefix}"
     label 'process_high'
     container 'quay.io/biocontainers/ivar:1.4--h6b7c446_1'
 
     input:
-    tuple val(meta), path(bam), path(bai), path(ref), val(ref_name)
+    tuple val(meta), path(bam), path(bai), val(ref_info), path(ref)
 
     output:
-    tuple val(meta), val(ref_name), path("*.fa"),       optional: true, emit: consensus
-    tuple val(meta), val(ref_name), path("*.qual.txt"), optional: true, emit: qual
-    tuple val(meta), val(ref_name), path("*.mpileup"),  optional: true, emit: mpileup
+    tuple val(meta), val(ref_info), path("*.fa"),       optional: true, emit: consensus
+    tuple val(meta), val(ref_info), path("*.qual.txt"), optional: true, emit: qual
+    tuple val(meta), val(ref_info), path("*.mpileup"),  optional: true, emit: mpileup
 
     when:
     task.ext.when == null || task.ext.when
@@ -17,7 +17,7 @@ process IVAR_CONSENSUS {
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    def prefix = "${meta.id}_${ref_name}"
+    def prefix = task.ext.prefix
 
     """
 
