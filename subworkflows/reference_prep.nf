@@ -23,18 +23,25 @@ workflow REFERENCE_PREP {
         db
     )
 
+    // Combine reads with references while keeping meta
     ch_reads
-        .cross(MAKE_REFERENCE_FASTA.out.ref)
-        .multiMap { it -> 
-            reads: it[0]
-            ref: it[1]
+        .combine(MAKE_REFERENCE_FASTA.out.ref, by: [0])
+        .set { ch_reads_refs }
+
+    // Combine with contigs (since contigs also have meta)
+    ch_reads_refs
+        .combine(contigs, by: [0])
+        .multiMap { it ->
+            reads: [ it[0], it[1] ]
+            ref: [ it[0], it[2], it[3] ]
+            contigs: [ it[0], it[4] ]
         }
         .set { ch_output }
 
     emit:
-    contigs = contigs
-    reads   = ch_output.reads
-    ref     = ch_output.ref
+    reads       = ch_output.reads
+    ref         = ch_output.ref 
+    contigs     = ch_output.contigs
 }
 
 def add_ref_info_to_meta(meta, refs_tsv) {

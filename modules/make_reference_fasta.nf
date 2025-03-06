@@ -8,7 +8,7 @@ process MAKE_REFERENCE_FASTA {
     path db
 
     output:
-    tuple val(meta), path("*.fa"), val(ref_info), emit: ref
+    tuple val(meta), val(ref_info), path("*.fa"), emit: ref
 
     when:
     task.ext.when == null || task.ext.when

@@ -1,5 +1,5 @@
 process GAPFILL_WITH_REF {
-    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    tag "${task.ext.prefix}"
     label 'process_low'
     container 'ilepeli/adar:0.0.2'
 
@@ -11,7 +11,7 @@ process GAPFILL_WITH_REF {
 
     script:
 
-    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    def prefix = task.ext.prefix
     """
     nucmer $chosen_ref ${intermediate_contigs} --prefix ${prefix}
     delta-filter ${prefix}.delta > ${prefix}_filtered.delta

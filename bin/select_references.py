@@ -10,6 +10,7 @@ OUT_COLS = [
     "Query_name", 
     "ANI", 
     "Align_fraction_ref", 
+    "Total_bases_covered", 
     ]
 
 def prepare_row(row):
@@ -39,11 +40,15 @@ def select_refs(sample_identifier, dist_tsv, ani_thres, align_ref_thres):
     with open(dist_tsv, "r") as inf:
         lines = inf.readlines()
 
-    inheader = lines[0].split("\t")
+    inheader = lines[0].replace("\n", "").split("\t")
     data = list(csv.DictReader(lines[1:], delimiter = "\t", fieldnames=inheader))
-    
+
     # sort SKANI db hits first by fraction of ref genome covered, then by ANI
-    data.sort(key = lambda row: (float(row["Align_fraction_ref"]), float(row["ANI"])), reverse = True)
+    data.sort(key = lambda row: (
+        float(row["Align_fraction_ref"]), 
+        float(row["Total_bases_covered"]),
+        float(row["ANI"])
+        ), reverse = True)
 
     out_rows = {}
     for row in data:
@@ -56,16 +61,13 @@ def select_refs(sample_identifier, dist_tsv, ani_thres, align_ref_thres):
                 out_row = prepare_row(row)
                 out_rows[tag] = out_row
 
-            else:
-                break # no need to look at stuff below threshold
-
     if not out_rows: ## no refs found passing thresholds
-        row = data[0]
-        out_rows["_"] = row
-        prepare_row(row)
+        print(f"No suitable references found for sample {sample_identifier}!")
+        out_rows["_"] = prepare_row(data[0])
         report_file = f"{sample_identifier}_failed_assembly.tsv"
 
     else:
+        print(f"Found at least one reference to use for {sample_identifier}.")
         report_file = f"{sample_identifier}_covstats.tsv"
 
     with open(report_file, "w") as outf:

@@ -77,7 +77,7 @@ workflow {
 
     CONSENSUS_ASSEMBLY(
         CONTIG_GEN.out.contigs,
-        ch_sample_input
+        CONTIG_GEN.out.reads,
     )
 
 }

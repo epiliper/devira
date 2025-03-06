@@ -1,5 +1,5 @@
 process GAPFILL_WITH_READS {
-    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    tag "${task.ext.prefix}"
     label 'process_high'
     container 'quay.io/epil02/adar:0.0.5'
 
@@ -11,7 +11,7 @@ process GAPFILL_WITH_READS {
 
     script:
     def fastq_to_bam = meta.single_end ? "-0 $reads" : "-1 ${reads[0]} -2 ${reads[1]}"
-    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    def prefix = task.ext.prefix
     def bam = "${prefix}.bam"
 
     """

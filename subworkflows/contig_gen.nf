@@ -38,8 +38,9 @@ workflow CONTIG_GEN {
    )
 
    MUMMER(
-    REFERENCE_PREP.out.contigs
-    .join(REFERENCE_PREP.out.ref, by: [0]))
+    REFERENCE_PREP.out.ref
+    .join(REFERENCE_PREP.out.contigs)
+   )
 
    FILTER_AND_GLUE_CONTIGS(
     MUMMER.out.delta_tile
@@ -48,7 +49,7 @@ workflow CONTIG_GEN {
    GAPFILL_WITH_READS(
     FILTER_AND_GLUE_CONTIGS
     .out.intermediate_scaffold
-    .join(reads_meta, by: [0])
+    .join(REFERENCE_PREP.out.reads)
    )
 
    GAPFILL_WITH_REF(
@@ -56,6 +57,7 @@ workflow CONTIG_GEN {
    )
 
    emit: 
-   contigs = GAPFILL_WITH_REF.out.prep_scaffold
+   contigs  = GAPFILL_WITH_REF.out.prep_scaffold
+   reads    = REFERENCE_PREP.out.reads 
 
 }

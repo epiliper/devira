@@ -14,7 +14,7 @@ process SELECT_REFERENCES {
     """
     select_references.py --sample ${meta.id} \\
         --dist_report $dist_report \\
-        --ani_thres 90.0 \\
+        --ani_thres 60.0 \\
         --align_ref_thres 60.0
     """
 }

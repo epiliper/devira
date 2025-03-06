@@ -26,7 +26,6 @@ process SKANI {
     --robust \\
     --detailed \\
     --ci \\
-    -n 10 \\
     --ri \\
     --no-marker-index \\
     -o ${prefix}.refs_skani_dist.full.tsv

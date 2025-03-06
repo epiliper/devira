@@ -1,24 +1,24 @@
 process MUMMER {
-    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    tag "${task.ext.prefix}"
     label 'process_high'
     container 'quay.io/epil02/adar:0.0.4'
 
     input: 
-    tuple val(meta), path(contigs_fasta), path(chosen_ref), val(ref_info)
+    tuple val(meta), val(ref_info), path(ref), path(contigs)
 
     output:
 
-    tuple val(meta), path("*_post_filter.delta"), path("*.tiling"), path(chosen_ref), val(ref_info), emit: delta_tile
+    tuple val(meta), path("*_post_filter.delta"), path("*.tiling"), path(ref), val(ref_info), emit: delta_tile
 
     script:
-    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    def prefix = task.ext.prefix
 
     """
     sample_id=${meta[0]}
 
     touch ${prefix}_post_filter.delta
 
-    nucmer --prefix ${prefix}_pre_filter --maxgap 200 --minmatch 10 $chosen_ref ${contigs_fasta}
+    nucmer --prefix ${prefix}_pre_filter --maxgap 200 --minmatch 10 $ref ${contigs}
 
     delta-filter ${prefix}_pre_filter.delta > ${prefix}_post_filter.delta
 

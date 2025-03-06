@@ -1,6 +1,5 @@
 process FILTER_AND_GLUE_CONTIGS {
-
-    tag "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    tag "${task.ext.prefix}"
     label "process_low"
     container 'quay.io/epil02/adar:0.0.4'
 
@@ -11,11 +10,9 @@ process FILTER_AND_GLUE_CONTIGS {
     tuple val(meta), path("*intermediate_scaffold.fasta"), path(chosen_ref), val(ref_info), emit: intermediate_scaffold
 
     script:
-
-    def prefix = "${meta.id}_${ref_info.acc}_${ref_info.tag}"
+    def prefix = task.ext.prefix
 
     """
-
     reference_fasta=${chosen_ref}
 
     filter_and_glue_contigs.py \\
@@ -23,7 +20,5 @@ process FILTER_AND_GLUE_CONTIGS {
     $chosen_ref \\
     ${mummer_delta_file} \\
     --out_scaffold_name "${prefix}_intermediate_scaffold.fasta"
-
     """
-
 }
