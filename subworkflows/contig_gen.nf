@@ -31,8 +31,12 @@ workflow CONTIG_GEN {
     throw new IllegalArgumentException("Invalid contig method: ${contig_method}. Choose from 'metaspades' or 'megahit'")
    }
 
+   contigs
+   .filter { meta, tax_info, contigs -> contigs.size() > 0 } 
+   .set { contigs_ch }
+
    REFERENCE_PREP(
-    contigs,
+    contigs_ch,
     reads_meta,
     ref_ch
    )
