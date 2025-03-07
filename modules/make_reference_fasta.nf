@@ -4,11 +4,11 @@ process MAKE_REFERENCE_FASTA {
     container 'quay.io/biocontainers/samtools:1.17--h00cdaf9_0'
 
     input:
-    tuple val(meta), val(ref_info)
+    tuple val(meta), val(tax_info), val(ref_info)
     path db
 
     output:
-    tuple val(meta), val(ref_info), path("*.fa"), emit: ref
+    tuple val(meta), val(tax_info), val(ref_info), path("*.fa"), emit: ref
 
     when:
     task.ext.when == null || task.ext.when

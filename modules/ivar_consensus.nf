@@ -4,12 +4,12 @@ process IVAR_CONSENSUS {
     container 'quay.io/biocontainers/ivar:1.4--h6b7c446_1'
 
     input:
-    tuple val(meta), path(bam), path(bai), val(ref_info), path(ref)
+    tuple val(meta), val(tax_info), path(bam), path(bai), val(ref_info), path(ref)
 
     output:
-    tuple val(meta), val(ref_info), path("*.fa"),       optional: true, emit: consensus
-    tuple val(meta), val(ref_info), path("*.qual.txt"), optional: true, emit: qual
-    tuple val(meta), val(ref_info), path("*.mpileup"),  optional: true, emit: mpileup
+    tuple val(meta), val(tax_info), val(ref_info), path("*.fa"),       optional: true, emit: consensus
+    tuple val(meta), val(tax_info), val(ref_info), path("*.qual.txt"), optional: true, emit: qual
+    tuple val(meta), val(tax_info), val(ref_info), path("*.mpileup"),  optional: true, emit: mpileup
 
     when:
     task.ext.when == null || task.ext.when

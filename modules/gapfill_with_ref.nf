@@ -4,10 +4,10 @@ process GAPFILL_WITH_REF {
     container 'ilepeli/adar:0.0.2'
 
     input:
-    tuple val(meta), path(intermediate_contigs), path(chosen_ref), val(ref_info), path(reads)
+    tuple val(meta), val(tax_info), path(intermediate_contigs), path(chosen_ref), val(ref_info), path(reads)
 
     output:
-    tuple val(meta), val(ref_info), path("*_imputed.fasta"), emit: prep_scaffold
+    tuple val(meta), val(tax_info), val(ref_info), path("*_imputed.fasta"), emit: prep_scaffold
 
     script:
 

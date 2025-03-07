@@ -11,22 +11,22 @@ workflow CONSENSUS_ASSEMBLY {
     main:
     BWA_MEM2_INITIAL(
         contigs
-        .join(reads)
+        .join(reads, by: [0, 1])
     )
 
     IVAR_CONSENSUS_INITIAL(
         BWA_MEM2_INITIAL.out.bam
-        .join(BWA_MEM2_INITIAL.out.ref)
+        .join(BWA_MEM2_INITIAL.out.ref, by: [0, 1])
     )
 
     BWA_MEM2_FINAL(
         IVAR_CONSENSUS_INITIAL.out.consensus
-        .join(reads)
+        .join(reads, by: [0, 1])
     )
 
     IVAR_CONSENSUS_FINAL(
         BWA_MEM2_FINAL.out.bam
-        .join(BWA_MEM2_FINAL.out.ref)
+        .join(BWA_MEM2_FINAL.out.ref, by: [0, 1])
     )
 
     emit:

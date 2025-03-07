@@ -4,12 +4,12 @@ process BWA_MEM2_ALIGN {
     container 'quay.io/epil02/revica-strm:0.0.4'
 
     input:
-    tuple val(meta), val(ref_info), path(ref), path(fastq)
+    tuple val(meta), val(tax_info), val(ref_info), path(ref), path(fastq)
 
     output:
-    tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"),                emit: bam
-    tuple val(meta), val(ref_info), path(ref),                                      emit: ref
-    tuple val(meta), path(fastq),                                                   emit: reads
+    tuple val(meta), val(tax_info), path("*.sorted.bam"), path("*.sorted.bam.bai"), emit: bam
+    tuple val(meta), val(tax_info), val(ref_info), path(ref),                       emit: ref
+    tuple val(meta), val(tax_info), path(fastq),                                    emit: reads
     tuple val(meta), path("*_failed_assembly.tsv"), optional: true,                 emit: failed_assembly
     tuple val(meta), val(ref_info), path("*_covstats.tsv"), optional: true,         emit: covstats
 

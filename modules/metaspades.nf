@@ -6,11 +6,11 @@ process METASPADES {
 
 
     input:
-    tuple val(meta), path(reads)
+    tuple val(meta), val(tax_info), path(reads)
 
 
     output:
-    tuple val(meta), path("contigs.fasta"), emit: contigs
+    tuple val(meta), val(tax_info), path("contigs.fasta"), emit: contigs
 
     script: 
 

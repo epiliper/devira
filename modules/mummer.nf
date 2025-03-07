@@ -4,11 +4,11 @@ process MUMMER {
     container 'quay.io/epil02/adar:0.0.4'
 
     input: 
-    tuple val(meta), val(ref_info), path(ref), path(contigs)
+    tuple val(meta), val(tax_info), val(ref_info), path(ref), path(contigs)
 
     output:
 
-    tuple val(meta), path("*_post_filter.delta"), path("*.tiling"), path(ref), val(ref_info), emit: delta_tile
+    tuple val(meta), val(tax_info), path("*_post_filter.delta"), path("*.tiling"), path(ref), val(ref_info), emit: delta_tile
 
     script:
     def prefix = task.ext.prefix

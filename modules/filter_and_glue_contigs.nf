@@ -4,10 +4,10 @@ process FILTER_AND_GLUE_CONTIGS {
     container 'quay.io/epil02/adar:0.0.4'
 
     input: 
-    tuple val(meta), path(mummer_delta_file), path(mummer_tile_file), path(chosen_ref), val(ref_info)
+    tuple val(meta), val(tax_info), path(mummer_delta_file), path(mummer_tile_file), path(chosen_ref), val(ref_info)
 
     output:
-    tuple val(meta), path("*intermediate_scaffold.fasta"), path(chosen_ref), val(ref_info), emit: intermediate_scaffold
+    tuple val(meta), val(tax_info), path("*intermediate_scaffold.fasta"), path(chosen_ref), val(ref_info), emit: intermediate_scaffold
 
     script:
     def prefix = task.ext.prefix

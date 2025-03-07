@@ -4,11 +4,11 @@ process SELECT_REFERENCES {
     container 'quay.io/epil02/revica-strm:0.0.4'
 
     input: 
-    tuple val(meta), path(contigs), path(dist_report)
+    tuple val(meta), val(tax_info), path(contigs), path(dist_report)
 
     output:
-    tuple val(meta), path("*failed_assembly.tsv"), optional: true, emit: failed_assembly
-    tuple val(meta), path("*covstats.tsv"), optional: true, emit: refs_tsv
+    tuple val(meta), val(tax_info), path("*failed_assembly.tsv"), optional: true, emit: failed_assembly
+    tuple val(meta), val(tax_info), path("*covstats.tsv"), optional: true, emit: refs_tsv
 
     script: 
     """

@@ -7,7 +7,7 @@ process EXTRACT_TAXON_ID {
     tuple val(meta), path(classified_fastq), path(kraken_output), path(kraken2_report), val(taxid)
 
     output:
-    tuple val(meta), path("*_TAX.fastq.gz"), emit: tax_reads
+    tuple val(meta), val(taxid), path("NUM_READS"), path("*_TAX.fastq.gz"), emit: tax_reads
     path("*_profile.tsv"), emit: profile_report
 
     script:
@@ -38,6 +38,8 @@ process EXTRACT_TAXON_ID {
     else
         echo "Read threshold met: found \$numreads reads"
     fi
+
+    echo \$numreads > NUM_READS
 
     printf "sample\ttaxon_id\tnum_found_reads\n" > ${meta.id}_${taxid}_profile.tsv
     printf "${meta.id}\t$taxid\t\$numreads\n" >> ${meta.id}_${taxid}_profile.tsv

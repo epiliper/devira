@@ -10,7 +10,7 @@ include { REFERENCE_PREP            } from './reference_prep'
 workflow CONTIG_GEN {
 
    take: 
-   reads_meta       // tuple val(meta), path(reads)
+   reads_meta       // tuple val(meta), val(tax_info), path(reads)
    contig_method    // val(contig_method)
    ref_ch           // path(ref)
 
@@ -37,9 +37,13 @@ workflow CONTIG_GEN {
     ref_ch
    )
 
+   //REFERENCE_PREP.out.ref
+   //.join(REFERENCE_PREP.out.contigs, by: [0, 1])
+   //.view {"${it}"}
+
    MUMMER(
     REFERENCE_PREP.out.ref
-    .join(REFERENCE_PREP.out.contigs)
+    .join(REFERENCE_PREP.out.contigs, by: [0, 1])
    )
 
    FILTER_AND_GLUE_CONTIGS(
@@ -49,7 +53,7 @@ workflow CONTIG_GEN {
    GAPFILL_WITH_READS(
     FILTER_AND_GLUE_CONTIGS
     .out.intermediate_scaffold
-    .join(REFERENCE_PREP.out.reads)
+    .join(REFERENCE_PREP.out.reads, by: [0, 1])
    )
 
    GAPFILL_WITH_REF(

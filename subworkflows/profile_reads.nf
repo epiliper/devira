@@ -41,7 +41,8 @@ workflow PROFILE_READS {
     // filter taxonID fastqs to have a significant number of reads
     EXTRACT_TAXON_ID
         .out.tax_reads
-        .filter { meta, reads -> reads.name != "FAILED_TAX.fastq.gz" }
+        .filter { meta, taxid, num_reads_f, reads -> reads.name != "FAILED_TAX.fastq.gz" }
+        .map { meta, taxid, num_reads_f, reads -> [ meta, [ taxid: taxid, num_reads: num_reads_f.text.toInteger() ], reads ]}
         .set { profiled_reads }
 
     EXTRACT_TAXON_ID.out.profile_report

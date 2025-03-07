@@ -5,11 +5,11 @@ process SKANI {
     container 'staphb/skani:0.2.2'
 
     input: 
-    tuple val(meta), path(contigs)
+    tuple val(meta), val(tax_info), path(contigs)
     path(ref)
 
     output: 
-    tuple val(meta), path(contigs), path("*dist.full.tsv"), emit: dist
+    tuple val(meta), val(tax_info), path(contigs), path("*dist.full.tsv"), emit: dist
 
     script:
     def prefix = "$meta.id"

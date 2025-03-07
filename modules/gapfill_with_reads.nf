@@ -4,10 +4,10 @@ process GAPFILL_WITH_READS {
     container 'quay.io/epil02/adar:0.0.5'
 
     input: 
-    tuple val(meta), path(scaffold_fasta), path(chosen_ref), val(ref_info), path(reads)
+    tuple val(meta), val(tax_info), path(scaffold_fasta), path(chosen_ref), val(ref_info), path(reads)
 
     output:
-    tuple val(meta), path("*gapfilled.fasta"), path(chosen_ref), val(ref_info), path(reads), emit: gapfilled_scaffold
+    tuple val(meta), val(tax_info), path("*gapfilled.fasta"), path(chosen_ref), val(ref_info), path(reads), emit: gapfilled_scaffold
 
     script:
     def fastq_to_bam = meta.single_end ? "-0 $reads" : "-1 ${reads[0]} -2 ${reads[1]}"
