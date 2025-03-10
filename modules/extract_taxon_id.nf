@@ -31,7 +31,7 @@ process EXTRACT_TAXON_ID {
     numlines=\$(zcat ${prefix}_${taxid}_TAX.fastq.gz | wc -l)
     numreads=\$(echo "\$numlines / 4" | bc)
 
-    if [ "\$(echo "\$numreads >= 2000" | bc)" -eq 0 ]; then
+    if [ "\$(echo "\$numreads >= 500" | bc)" -eq 0 ]; then
         echo "Insufficient reads (\$numreads), skipping..."
         rm *.fastq.gz
         touch FAILED_TAX.fastq.gz
