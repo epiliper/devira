@@ -12,7 +12,6 @@ include { CONSENSUS_ASSEMBLY    } from './subworkflows/consensus_assembly'
 
 // Import modules
 include { KRAKEN2           } from './modules/kraken2'
-include { CD_HIT_DUP        } from './modules/cd_hit_dup'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
@@ -60,14 +59,6 @@ workflow {
     )
 
     ch_sample_input = PROFILE_READS.out.profiled_reads
-
-    if (!params.skip_dedup) {
-
-        CD_HIT_DUP(
-            ch_sample_input
-        )
-        ch_sample_input = CD_HIT_DUP.out.reads
-    }
 
     CONTIG_GEN(
         ch_sample_input,
