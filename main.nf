@@ -1,7 +1,8 @@
 //  check args
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'No samplesheet specified!' }
-if (!params.refs) { exit 1, "Reference genome multifasta not specified!" }
-if (params.run_kraken2 & params.kraken2_db == null ) {exit 1, "Must provide a kraken2 database with --kraken2_db!" }
+if (!params.refs || !file(params.refs).exists()) { exit 1, "Invalid path specified: reference genome multifasta (--ref) " }
+if (!params.kraken2_db || !file(params.kraken2_db).exists()) {exit 1, "Invalid path specified: kraken2 database (--kraken2_db)" }
+if (!params.taxids || !file(params.taxids).exists()) {exit 1, "Invalid path specified: taxon ID TSV (--taxids)" }
 
 // Import subworkflows
 include { INPUT_CHECK           } from './subworkflows/input_check'
