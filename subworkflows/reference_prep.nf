@@ -10,8 +10,11 @@ workflow REFERENCE_PREP {
 
     main:
     SKANI(contigs, db)
+    SKANI.out.dist
+    .filter { meta, tax_info, contigs, dist -> file(dist).countLines() > 1 }
+    .set { dists }
 
-    SELECT_REFERENCES(SKANI.out.dist)
+    SELECT_REFERENCES(dists)
 
     // if we have the same reference being selected for multiple taxon ids, then select
     // only the taxon id with the highest base count to be used to generate said reference
@@ -21,7 +24,7 @@ workflow REFERENCE_PREP {
     .flatten().collate( 3,false )
     .collect(flat: false, sort: { a ,b -> b[1].num_bases <=> a[1].num_bases } )
     .flatten().collate( 3,false)
-    .unique { meta, tax_info, ref_info -> [ meta.id, ref_info.tag ]}
+    .unique { meta, tax_info, ref_info -> [ meta.id, ref_info.tag ] }
     .set { ch_new_meta }
 
     MAKE_REFERENCE_FASTA(
