@@ -7,11 +7,12 @@ if (!params.taxids || !file(params.taxids).exists()) {exit 1, "Invalid path spec
 // Import subworkflows
 include { INPUT_CHECK           } from './subworkflows/input_check'
 include { FASTP_MULTIQC         } from './subworkflows/fastp_multiqc'
-include { PROFILE_READS         } from './subworkflows/profile_reads'
-include { CONTIG_GEN            } from './subworkflows/contig_gen'
+include { PROFILE_CONTIGS       } from './subworkflows/profile_contigs'
+include { REFINE_CONTIGS        } from './subworkflows/refine_contigs'
 include { CONSENSUS_ASSEMBLY    } from './subworkflows/consensus_assembly'
 
 // Import modules
+include { MEGAHIT           } from './modules/megahit'
 include { KRAKEN2           } from './modules/kraken2'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
 
@@ -53,23 +54,25 @@ workflow {
 
     ch_sample_input = FASTP_MULTIQC.out.reads
 
-    PROFILE_READS(
-        ch_sample_input,
+    MEGAHIT(ch_sample_input)
+
+    PROFILE_CONTIGS(
+        MEGAHIT.out.contigs,
         file(params.kraken2_db),
         file(params.taxids)
     )
 
-    ch_sample_input = PROFILE_READS.out.profiled_reads
+    profiled_contigs = PROFILE_CONTIGS.out.profiled_contigs
 
-    CONTIG_GEN(
+    REFINE_CONTIGS(
+        profiled_contigs,
         ch_sample_input,
-        params.contig_method,
         file(params.refs)
     )
 
     CONSENSUS_ASSEMBLY(
-        CONTIG_GEN.out.contigs,
-        CONTIG_GEN.out.reads,
+        REFINE_CONTIGS.out.contigs,
+        REFINE_CONTIGS.out.reads,
     )
 
 }

@@ -4,44 +4,40 @@ process EXTRACT_TAXON_ID {
     container 'quay.io/epil02/adar:0.0.4'
 
     input:
-    tuple val(meta), path(classified_fastq), path(kraken_output), path(kraken2_report), val(taxid)
+    tuple val(meta), path(classified_contigs), path(kraken_output), path(kraken2_report), val(taxid)
 
     output:
-    tuple val(meta), val(taxid), path("NUM_READS"), path("*_TAX.fastq.gz"), emit: tax_reads
+    tuple val(meta), val(taxid), path("NUM_BASES"), path("*_TAX.fasta"), emit: tax_contigs
     path("*_profile.tsv"), emit: profile_report
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def reads_in = meta.single_end ? "-s1 ${classified_fastq}" : "-s1 ${classified_fastq[0]} -s2 ${classified_fastq[1]}"
-    def reads_out = meta.single_end ? "-o ${prefix}_${taxid}_TAX.fastq" : "-o ${prefix}_${taxid}_TAX.fastq -o2 ${prefix}_${taxid}_2_TAX.fastq"
+    def contigs_out = "${prefix}_${taxid}_TAX.fasta"
 
     """
     extract_kraken_reads.py \\
         -k $kraken_output \\
         -r $kraken2_report \\
-        $reads_in \\
+        -s $classified_contigs \\
         -t $taxid \\
-        $reads_out \\
-        --fastq-output \\
+        -o $contigs_out \\
         --include-children \\
         --include-parents > /dev/null
 
-    gzip *.fastq
+    ## count number of characters that aren't part of the header
+    num_bases=\$(cat $contigs_out | grep -v \\> | wc -m | tr -d ' ')
 
-    numlines=\$(zcat ${prefix}_${taxid}_TAX.fastq.gz | wc -l)
-    numreads=\$(echo "\$numlines / 4" | bc)
-
-    if [ "\$(echo "\$numreads >= 500" | bc)" -eq 0 ]; then
-        echo "Insufficient reads (\$numreads), skipping..."
-        rm *.fastq.gz
-        touch FAILED_TAX.fastq.gz
+    if [ "\$(echo "\$num_bases >= 500" | bc)" -eq 0 ]; then
+        echo "Insufficient bases (\$num_bases), skipping..."
+        rm *.fasta
+        touch FAILED_TAX.fasta
     else
-        echo "Read threshold met: found \$numreads reads"
+        echo "Base count threshold met: found \$num_bases bases"
     fi
 
-    echo \$numreads > NUM_READS
+    echo \$num_bases > NUM_BASES
 
-    printf "sample\ttaxon_id\tnum_found_reads\n" > ${meta.id}_${taxid}_profile.tsv
-    printf "${meta.id}\t$taxid\t\$numreads\n" >> ${meta.id}_${taxid}_profile.tsv
+    printf "sample\ttaxon_id\tnum_associated_bases\n" > ${meta.id}_${taxid}_profile.tsv
+    printf "${meta.id}\t$taxid\t\$num_bases\n" >> ${meta.id}_${taxid}_profile.tsv
     """
 }

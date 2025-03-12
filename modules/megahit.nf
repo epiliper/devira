@@ -6,11 +6,11 @@ process MEGAHIT {
 
 
     input:
-    tuple val(meta), val(tax_info), path(reads)
+    tuple val(meta), path(reads)
 
 
     output:
-    tuple val(meta), val(tax_info), path("${meta.id}/final.contigs.fa"), emit: contigs
+    tuple val(meta), path("${meta.id}/final.contigs.fa"), emit: contigs
 
     script: 
 

@@ -9,19 +9,19 @@ include { EXTRACT_TAXON_ID } from '../modules/extract_taxon_id'
 // with output fastqs only making it through the pipeline if they match or exceed 
 // a given threshold read count.
 
-workflow PROFILE_READS {
+workflow PROFILE_CONTIGS {
 
     take:
-    reads_meta  // tuple val(meta), path(reads)
+    contigs_meta  // tuple val(meta), path(contigs)
     krak_db     // path to Kraken2 database
     taxids      // path to taxonid list
 
     main:
-    KRAKEN2(reads_meta, krak_db, true, false)
+    KRAKEN2(contigs_meta, krak_db, true, false)
 
     // combine into a tuple for convenience
-    KRAKEN2.out.classified_reads_fastq
-        .join(KRAKEN2.out.classified_reads_assignment)
+    KRAKEN2.out.classified_contigs
+        .join(KRAKEN2.out.classified_contigs_assignment)
         .join(KRAKEN2.out.report)
         .set { krak_out_ch } 
 
@@ -40,10 +40,10 @@ workflow PROFILE_READS {
 
     // filter taxonID fastqs to have a significant number of reads
     EXTRACT_TAXON_ID
-        .out.tax_reads
-        .filter { meta, taxid, num_reads_f, reads -> reads.name != "FAILED_TAX.fastq.gz" }
-        .map { meta, taxid, num_reads_f, reads -> [ meta, [ taxid: taxid, num_reads: num_reads_f.text.toInteger() ], reads ]}
-        .set { profiled_reads }
+        .out.tax_contigs
+        .filter { meta, taxid, num_bases_f, contigs -> contigs.name != "FAILED_TAX.fasta" }
+        .map { meta, taxid, num_bases_f, contigs -> [ meta, [ taxid: taxid, num_bases: num_bases_f.text.toInteger() ], contigs ]}
+        .set { profiled_contigs }
 
     EXTRACT_TAXON_ID.out.profile_report
     .collectFile(
@@ -54,5 +54,5 @@ workflow PROFILE_READS {
     )
 
     emit:
-    profiled_reads          = profiled_reads
+    profiled_contigs          = profiled_contigs
 }

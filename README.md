@@ -25,7 +25,7 @@ Right now, ADAR is intended primarily for assembly of respiratory viruses, inclu
 ## Instructions
 0. Ensure the Docker desktop client is running. [Install it](https://docs.docker.com/get-started/get-docker/) if you haven't already.
 1. Arrange all input fastqs in their own directory. It's recommended to have single-end and paired-end libraries in separate directories.
-2. From this repository, download `bin/fastq_dir_to_samplesheet.py` script. Run the script as follows:   
+2. From this repository, download `bin/fastq_dir_to_samplesheet.py` script (navigate to the file in this repository, and click the "Download" icon button) Run the script as follows:   
 
     ```bash 
     python3 fastq_dir_to_samplesheet.py $PATH_TO_FASTQ_DIR \\

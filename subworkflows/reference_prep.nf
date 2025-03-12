@@ -5,7 +5,7 @@ include { MAKE_REFERENCE_FASTA  } from '../modules/make_reference_fasta'
 workflow REFERENCE_PREP {
     take: 
     contigs  // path(meta, tax_info, contigs)
-    ch_reads // path(meta, tax_info, reads)
+    ch_reads // path(meta, reads)
     db       // path(db)
 
     main:
@@ -14,12 +14,12 @@ workflow REFERENCE_PREP {
     SELECT_REFERENCES(SKANI.out.dist)
 
     // if we have the same reference being selected for multiple taxon ids, then select
-    // only the taxon id with the highest read count to be used to generate said reference
+    // only the taxon id with the highest base count to be used to generate said reference
     // this should not be a problem with kraken2 databases that are low redundancy
     SELECT_REFERENCES.out.refs_tsv
     .map { meta, tax_info, refs_tsv -> add_ref_info_to_meta(meta, tax_info, refs_tsv) }
     .flatten().collate( 3,false )
-    .collect(flat: false, sort: { a ,b -> b[1].num_reads <=> a[1].num_reads } )
+    .collect(flat: false, sort: { a ,b -> b[1].num_bases <=> a[1].num_bases } )
     .flatten().collate( 3,false)
     .unique { meta, tax_info, ref_info -> [ meta.id, ref_info.tag ]}
     .set { ch_new_meta }
@@ -32,7 +32,7 @@ workflow REFERENCE_PREP {
     // Combine reads with references while keeping meta
     // [ meta, tax_info, ref_info, ref, reads ]
     MAKE_REFERENCE_FASTA.out.ref
-        .combine(ch_reads, by: [0, 1])
+        .combine(ch_reads, by: [0])
         .set { ch_reads_refs }
 
     // Combine with contigs (since contigs also have meta)
