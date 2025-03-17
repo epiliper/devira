@@ -63,8 +63,10 @@ def modify_contigs(infile, ref, query, outfile):
     else:
         raise NameError("reference name '%s' not in alignment" % ref)
 
-    mc = ContigModifier(str(aln[ref_idx].seq), str(aln[consensus_idx].seq))
-    mc.call_reference_ns()
+    ref, cons = str(aln[ref_idx].seq), str(aln[consensus_idx].seq)
+    if len(cons) < len(ref):
+        mc = ContigModifier(str(aln[ref_idx].seq), str(aln[consensus_idx].seq))
+        mc.replace_end_gaps()
     # mc.trim_ends()
     # mc.replace_5ends(55)
     # mc.replace_3ends(55)

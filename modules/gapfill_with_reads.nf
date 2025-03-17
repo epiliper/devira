@@ -7,7 +7,7 @@ process GAPFILL_WITH_READS {
     tuple val(meta), val(tax_info), path(scaffold_fasta), path(chosen_ref), val(ref_info), path(reads)
 
     output:
-    tuple val(meta), val(tax_info), path("*gapfilled.fasta"), path(chosen_ref), val(ref_info), path(reads), emit: gapfilled_scaffold
+    tuple val(meta), val(tax_info), val(ref_info), path("*gapfilled.fasta"), emit: gapfilled_scaffold
 
     script:
     def reads_in = meta.single_end ? "${reads}" : "${reads[0]},${reads[1]}"
