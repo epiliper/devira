@@ -116,13 +116,26 @@ def find_max_overhangs(reference_file, query_file, threads):
         for future in concurrent.futures.as_completed(futures):
             results.append(future.result())
 
-    # sort to contigs with best 5' and 3' overhangs
-    results.sort(key=lambda x: x["overhang_5_prime"], reverse=True)
-    max_5prime_query = results[0]
 
-    results.sort(key=lambda x: x["overhang_3_prime"], reverse=True)
-    max_3prime_query = results[0]
-    
+    def get_max_below_thres(map, key, thres):
+        results.sort(key = lambda x: x[key], reverse=True)
+        found = False
+        for q in results:
+            if q[key] <= thres:
+                found = True
+                break
+
+        if not found:
+            q[key] = 0
+
+        return q
+
+
+    # sort to contigs with best 5' and 3' overhangs
+    # results.sort(key=lambda x: x["overhang_5_prime"], reverse=True)
+    max_5prime_query = get_max_below_thres(results, "overhang_5_prime", len(ref_seq) / 3)
+    max_3prime_query = get_max_below_thres(results, "overhang_3_prime", len(ref_seq) / 3)
+
     return {
         "reference_id": ref_id,
         "max_5prime_overhang": {
@@ -146,13 +159,14 @@ def extend_sequence(ref_file, best_5prime, best_3prime, outfile):
         if best_5prime["query_id"] is not None:
             contig_id = best_5prime["query_id"]
             left_overhang = best_5prime["length"]
-            new_ref = list(best_5prime["seq"])[0:left_overhang + 1] + new_ref
+            new_ref = list(best_5prime["seq"])[0:left_overhang] + new_ref
             print(f"extended {ref_id} 5' with {left_overhang} bases from contig {contig_id}")
 
         if best_3prime["query_id"] is not None:
             contig_id = best_3prime["query_id"]
-            right_overhang = best_5prime["length"]
-            new_ref = list(best_3prime["seq"])[0:right_overhang + 1] + new_ref
+            right_overhang = best_3prime["length"]
+            # right_overhang = len(best_3prime["seq"]) - 1 - right_overhang_len
+            new_ref = new_ref + list(best_3prime["seq"])[-right_overhang: ]
             print(f"extended {ref_id} 3' with {right_overhang} bases from contig {contig_id}")
 
 
