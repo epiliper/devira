@@ -170,21 +170,10 @@ def main():
     parser.add_argument("-q", "--query", required=True, help="contig fasta")
     parser.add_argument("-o", "--output", required=True, help="output for extended fasta")
     parser.add_argument("-t", "--threads", required=False, type = int, default=os.cpu_count(), help="number of threads to use")
-    
     args = parser.parse_args()
     
     results = find_max_overhangs(args.reference, args.query, args.threads) ## find max overhangs
     extended_ref = extend_sequence(args.reference, results["max_5prime_overhang"], results["max_3prime_overhang"], args.output) ## extend scaffold and write to output
 
-    # debug stuff
-    # print(f"Reference: {results['reference_id']}")
-    # print("\nMaximum overhangs found:")
-    # print(f"5' (left) overhang: {results['max_5prime_overhang']['length']} bp from query {results['max_5prime_overhang']['query_id']}")
-    # print(f"3' (right) overhang: {results['max_3prime_overhang']['length']} bp from query {results['max_3prime_overhang']['query_id']}")
-    
-    # print("\nTop 5 queries by total overhang:")
-    # for i, result in enumerate(results['all_results'][:5], 1):
-    #     print(f"{i}. {result['query_id']}: {result['total_overhang']} bp total ({result['5prime_overhang']} bp 5', {result['3prime_overhang']} bp 3')")
-            
 if __name__ == "__main__":
     exit(main())

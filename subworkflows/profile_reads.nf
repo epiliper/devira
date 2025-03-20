@@ -46,13 +46,17 @@ workflow PROFILE_READS {
         .set { profiled_reads }
 
     EXTRACT_TAXON_ID.out.profile_report
-    .collectFile(
-        storeDir: "${params.output}", 
-        name: "${params.run_name}_profile.tsv",
-        keepHeader: true,
-        sort: {file -> file.text}
-    )
+        .collectFile(
+            storeDir: "${params.output}", 
+            name: "${params.run_name}_profile.tsv",
+            keepHeader: true,
+            sort: {file -> file.text}
+        )
+
+
+    EXTRACT_TAXON_ID.out
+    .profile_report.set { profile_reports }
 
     emit:
-    profiled_reads          = profiled_reads
+    profiled_reads  = profiled_reads
 }

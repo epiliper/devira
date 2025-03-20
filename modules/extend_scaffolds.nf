@@ -12,6 +12,7 @@ process EXTEND_SCAFFOLDS {
     script:
 
     def out = "${task.ext.prefix}_scaffold_extended.fa"
+    def stats_out ="${task.ext.prefix}_contig_stats.tsv"
 
     """
     extend_gaps.py \\

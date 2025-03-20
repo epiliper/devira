@@ -32,6 +32,9 @@ workflow CONSENSUS_ASSEMBLY {
     emit:
     init_alignments = BWA_MEM2_INITIAL.out.bam
     init_consensus = IVAR_CONSENSUS_INITIAL.out.consensus
+    init_covstats = BWA_MEM2_INITIAL.out.covstats
+
     final_alignments = BWA_MEM2_FINAL.out.bam
     final_consensus = IVAR_CONSENSUS_FINAL.out.consensus
+    final_covstats = BWA_MEM2_FINAL.out.covstats
 }

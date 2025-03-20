@@ -14,6 +14,7 @@ include { CONSENSUS_ASSEMBLY    } from './subworkflows/consensus_assembly'
 // Import modules
 include { KRAKEN2           } from './modules/kraken2'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
+include { SUMMARY           } from './modules/summary'
 
 log.info("   █████████   ██████████     █████████   ███████████      ") 
 log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
@@ -71,5 +72,35 @@ workflow {
         CONTIG_GEN.out.contigs,
         CONTIG_GEN.out.reads,
     )
+
+    // [ meta, tax_info, log, contigs, n50 ]
+    FASTP_MULTIQC.out.trim_log
+    .combine(
+        //CONTIG_GEN.out.contigs.map { meta, tax_info, ref_info, scaffold -> 
+        //[ meta, tax_info, scaffold ] }
+        //.join(CONTIG_GEN.out.contig_stats, by: [0, 1]),
+        //by: 0)
+        CONTIG_GEN.out.contigs,
+        by: 0)
+    .map { meta, log, tax_info, ref_info, contigs  -> [ meta, tax_info, ref_info, log, contigs ] }
+    .set { contig_sum_ch }
+
+    // [ meta, tax_info, log, contigs, n50, consensus, init_covstats, final_covstats]
+    ch_summary_in = contig_sum_ch
+    .join(
+        CONTIG_GEN.out.contig_stats
+            .join(CONSENSUS_ASSEMBLY.out.final_consensus, by: [0, 1, 2])
+            .join(CONSENSUS_ASSEMBLY.out.init_covstats, by: [0, 1, 2])
+            .join(CONSENSUS_ASSEMBLY.out.final_covstats, by: [0, 1, 2]),
+    by: [0, 1, 2])
+    .map { meta, tax_info, ref_info, log, contigs, contig_stats, consensus, init_covstats, final_covstats -> 
+    [ meta, tax_info, ref_info, log, contigs, contig_stats, consensus, init_covstats, final_covstats ] }
+
+    SUMMARY(
+        ch_summary_in
+    )
+
+    SUMMARY.out.summary
+    .collectFile(storeDir: "${params.output}", name:"${params.run_name}_summary.tsv", keepHeader: true, sort: {file -> file.name })
 
 }

@@ -10,8 +10,8 @@ process BWA_MEM2_ALIGN {
     tuple val(meta), val(tax_info), path("*.sorted.bam"), path("*.sorted.bam.bai"), emit: bam
     tuple val(meta), val(tax_info), val(ref_info), path(ref),                       emit: ref
     tuple val(meta), val(tax_info), path(fastq),                                    emit: reads
-    tuple val(meta), path("*_failed_assembly.tsv"), optional: true,                 emit: failed_assembly
-    tuple val(meta), val(ref_info), path("*_covstats.tsv"), optional: true,         emit: covstats
+    tuple val(meta), val(tax_info), path("*_failed_assembly.tsv"), optional: true,                 emit: failed_assembly
+    tuple val(meta), val(tax_info), val(ref_info), path("*_covstats.tsv"), optional: true,         emit: covstats
 
     when:
     task.ext.when == null || task.ext.when
