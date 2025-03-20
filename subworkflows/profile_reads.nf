@@ -29,7 +29,7 @@ workflow PROFILE_READS {
     // extract matching reads
     Channel.fromPath(taxids)
         .splitCsv(header: false, strip: true, sep: '\t')
-        .map { row -> row[0] }
+        .map { row -> [ taxid: row[0], name: row[1] ] }
         .set { tid_ch }
 
     krak_out_ch
@@ -41,8 +41,8 @@ workflow PROFILE_READS {
     // filter taxonID fastqs to have a significant number of reads
     EXTRACT_TAXON_ID
         .out.tax_reads
-        .filter { meta, taxid, num_reads_f, reads -> reads.name != "FAILED_TAX.fastq.gz" }
-        .map { meta, taxid, num_reads_f, reads -> [ meta, [ taxid: taxid, num_reads: num_reads_f.text.toInteger() ], reads ]}
+        .filter { meta, tax_info, num_reads_f, reads -> reads.name != "FAILED_TAX.fastq.gz" }
+        .map { meta, tax_info, num_reads_f, reads -> [ meta, [ taxid: tax_info.taxid, name: tax_info.name, num_reads: num_reads_f.text.toInteger() ], reads ]}
         .set { profiled_reads }
 
     EXTRACT_TAXON_ID.out.profile_report

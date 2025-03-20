@@ -1,16 +1,17 @@
 process EXTRACT_TAXON_ID {
-    tag "$meta.id - $taxid"
+    tag "$meta.id - $tax_info.taxid"
     label 'process_single'
     container 'quay.io/epil02/adar:0.0.4'
 
     input:
-    tuple val(meta), path(classified_fastq), path(kraken_output), path(kraken2_report), val(taxid)
+    tuple val(meta), path(classified_fastq), path(kraken_output), path(kraken2_report), val(tax_info)
 
     output:
-    tuple val(meta), val(taxid), path("NUM_READS"), path("*_TAX.fastq.gz"), emit: tax_reads
+    tuple val(meta), val(tax_info), path("NUM_READS"), path("*_TAX.fastq.gz"), emit: tax_reads
     path("*_profile.tsv"), emit: profile_report
 
     script:
+    def taxid = tax_info.taxid
     def prefix = task.ext.prefix ?: "${meta.id}"
     def reads_in = meta.single_end ? "-s1 ${classified_fastq}" : "-s1 ${classified_fastq[0]} -s2 ${classified_fastq[1]}"
     def reads_out = meta.single_end ? "-o ${prefix}_${taxid}_TAX.fastq" : "-o ${prefix}_${taxid}_TAX.fastq -o2 ${prefix}_${taxid}_2_TAX.fastq"

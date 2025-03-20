@@ -17,7 +17,7 @@ process SUMMARY {
     def prefix = task.ext.prefix ?: ''
 
     """
-    taxon_id=${tax_info.taxid}
+    taxon=${tax_info.name}
     taxon_reads=${tax_info.num_reads}
     contig_header=\$(sed -n '1p' $contig_stats | tr '\t\n' '  ')
     contig_values=\$(sed -n '2p' $contig_stats | tr '\t\n' '  ')
@@ -75,14 +75,14 @@ process SUMMARY {
     ##################
 
     printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-        "sample_name" "raw_reads" "trimmed_reads" "pct_reads_trimmed" "taxon_ID" "taxon_reads"\
+        "sample_name" "raw_reads" "trimmed_reads" "pct_reads_trimmed" "taxon" "taxon_reads"\
         \$contig_header "ref_tag" "ref_acc"\
         "mapped_reads_ref" "pct_reads_mapped_ref" "coverage_ref" "mean_depth_ref" \
         "mapped_reads_c1" "pct_reads_mapped_c1" "coverage_c1" "mean_depth_c1" \
         "consensus_length" "num_ns_consensus" "pct_ns" "num_ambiguous" > ${prefix}_summary.tsv
 
     printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-        "$meta.id" "\$raw_reads" "\$trimmed_reads" "\$pct_reads_trimmed_formatted" "\$taxon_id" "\$taxon_reads" \
+        "$meta.id" "\$raw_reads" "\$trimmed_reads" "\$pct_reads_trimmed_formatted" "\$taxon" "\$taxon_reads" \
         \$contig_values "${ref_info.tag}" "${ref_info.acc}"\
         "\$mapped_reads_ref" "\$pct_reads_mapped_formatted_ref" "\$coverage_ref" "\$mean_depth_ref" \
         "\$mapped_reads_c1" "\$pct_reads_mapped_formatted_c1" "\$coverage_c1" "\$mean_depth_c1" \
