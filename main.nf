@@ -15,17 +15,15 @@ include { CONSENSUS_ASSEMBLY    } from './subworkflows/consensus_assembly'
 include { KRAKEN2           } from './modules/kraken2'
 include { SUBSAMPLE_FASTQ   } from './modules/subsample'
 include { SUMMARY           } from './modules/summary'
-
-log.info("   █████████   ██████████     █████████   ███████████      ") 
-log.info("  ███░░░░░███ ░░███░░░░███   ███░░░░░███ ░░███░░░░░███     ") 
-log.info(" ░███    ░███  ░███   ░░███ ░███    ░███  ░███    ░███     ") 
-log.info(" ░███████████  ░███    ░███ ░███████████  ░██████████      ") 
-log.info(" ░███░░░░░███  ░███    ░███ ░███░░░░░███  ░███░░░░░███     ")
-log.info(" ░███    ░███  ░███    ███  ░███    ░███  ░███    ░███     ")
-log.info(" █████   █████ ██████████   █████   █████ █████   █████    ")
-log.info("░░░░░   ░░░░░ ░░░░░░░░░░   ░░░░░   ░░░░░ ░░░░░   ░░░░░     ") 
-log.info "Assisted de-novo assembly via reference\n"
-
+                                                              
+log.info("`7MM===Yb.        `7MMF'   `7MF'db  `7MM===Mq.        db      ")
+log.info("  MM    `Yb.        `MA     ,V        MM   `MM.      ;MM:     ")
+log.info("  MM     `Mb  .gP=Ya VM:   ,V `7MM    MM   ,M9      ,V^MM.    ")
+log.info("  MM      MM ,M'   Yb MM.  M'   MM    MMmmdM9      ,M  `MM    ")
+log.info("  MM     ,MP 8M====== `MM A'    MM    MM  YM.      AbmmmqMA   ")
+log.info("  MM    ,dP' YM.    ,  :MM;     MM    MM   `Mb.   A'     VML  ")
+log.info(".JMMmmmdP'    `Mbmmd'   VF    .JMML..JMML. .JMM..AMA.   .AMMA.\n\n")
+                                                              
 workflow {
 
     INPUT_CHECK (

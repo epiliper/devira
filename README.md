@@ -1,14 +1,14 @@
 <p align="center">
-<img src="./img/adar_logo_dark.png#gh-dark-mode-only" width=80%>
-<img src="./img/adar_logo_light.png#gh-light-mode-only" width=80%>
+<img src="./img/devira_logo_dark.png#gh-dark-mode-only" width=80%>
+<img src="./img/devira_logo_light.png#gh-light-mode-only" width=80%>
 <img src="./img/adar_workflow.png" width=80%>
 </p>
 
 
 ## About
-ADAR is a pipeline for reference-guided denovo assembly of viral genomes from short-read sequencing data, tested with both shotgun and amplicon sequencing approaches. It is inspired by the Broad Institute's `assemble_denovo` workflow.
+DEVIRA is a pipeline for reference-guided denovo assembly of viral genomes from short-read sequencing data, tested with both shotgun and amplicon sequencing approaches. It is inspired by the Broad Institute's `assemble_denovo` workflow.
 
-Right now, ADAR is intended primarily for assembly of respiratory viruses, including:
+Right now, DEVIRA is intended primarily for assembly of respiratory viruses, including:
 
 - Seasonal coronaviruses
 - Parainfluenza
@@ -16,8 +16,8 @@ Right now, ADAR is intended primarily for assembly of respiratory viruses, inclu
 - Influenzas A and B
 - Enteroviruses (including rhinoviruses)
 ## Workflow
-1. ADAR takes in raw FASTQ files specified in a user-created samplesheet, performs read trimming and QC reporting, and assigns reads to specific taxon bins with [kraken2](https://github.com/DerrickWood/kraken2). 
-2. The reads associated with each bin are then assembled into contigs with [megahit](https://github.com/voutcn/megahit), and the contigs are compared to FASTA references in a user-supplied database; for all references above average nucleotide identity and coverage thresholds, ADAR will use the references to guide and refine contig arrangement into scaffolds. 
+1. DEVIRA takes in raw FASTQ files specified in a user-created samplesheet, performs read trimming and QC reporting, and assigns reads to specific taxon bins with [kraken2](https://github.com/DerrickWood/kraken2). 
+2. The reads associated with each bin are then assembled into contigs with [megahit](https://github.com/voutcn/megahit), and the contigs are compared to FASTA references in a user-supplied database; for all references above average nucleotide identity and coverage thresholds, DEVIRA will use the references to guide and refine contig arrangement into scaffolds. 
 3. Scaffold gaps undergo gap-filling with 1) sequencing reads and, if any gaps are left, 2) reference sequence. 
 4. To generate a consensus genome, sequencing reads are realigned to the scaffolds with [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2), and the alignment is used to call consensus with [ivar consensus](https://github.com/andersen-lab/ivar). This is performed twice to get longer assemblies with less bias towards the chosen reference genome.
 
@@ -40,7 +40,7 @@ Right now, ADAR is intended primarily for assembly of respiratory viruses, inclu
 
 3. Run the pipeline with the samplesheet as input.
     ```bash
-    nextflow run epiliper/adar -r main -latest \\
+    nextflow run epiliper/devira -r main -latest \\
         --input ${SAMPLESHEET_NAME}.tsv --output $OUTPUT_DIR \\
         -profile docker
     ```
