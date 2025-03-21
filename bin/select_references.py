@@ -43,6 +43,11 @@ def select_refs(sample_identifier, dist_tsv, ani_thres, align_ref_thres):
     inheader = lines[0].replace("\n", "").split("\t")
     data = list(csv.DictReader(lines[1:], delimiter = "\t", fieldnames=inheader))
 
+    if not data:
+        print(f"No references were detected PERIOD (below or above SKANI thresholds) for sample {sample_identifier}")
+        return
+
+
     # sort SKANI db hits first by fraction of ref genome covered, then by ANI
     data.sort(key = lambda row: (
         float(row["Total_bases_covered"]),
