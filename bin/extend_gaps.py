@@ -28,25 +28,22 @@ def align_and_get_overlap(ref_record, query_record):
     overhang_5prime = 0
     overhang_3prime = 0
 
-    ## this is what this would look like with the old alignment API
-    # alignments = pairwise2.align.globalms(
-    #     ref_seq, 
-    #     query_seq,
-    #     2,     # match score
-    #     -1,    # mismatch pen
-    #     -1.5,    # gap open pen
-    #     -0.5,  # gap extend pen
-    #     one_alignment_only=True
-    # )
-
     try:
-        alignments = aligner.align(ref_seq, query_seq)
+        alignments = aligner.align(ref_seq, query_seq, strand = "+")
         if not alignments:
             return {"query_id": query_id, "overhang_5_prime": overhang_5prime, "overhang_3_prime": overhang_3prime}
 
     except OverflowError:
         ## crappy alignment
-        print("selected reference alignment to contigs is poor, not extending ends.")
+        print(f"CONTIG {query_id}: reference alignment is poor with forward strand. Trying reverse...")
+
+    try:
+        alignments = aligner.align(ref_seq, query_seq, strand = "-")
+        if not alignments:
+            return {"query_id": query_id, "overhang_5_prime": overhang_5prime, "overhang_3_prime": overhang_3prime}
+
+    except OverflowError:
+        print(f"CONTIG {query_id}: no suitable alignments found for either strand. Skipping...")
         return {"query_id": query_id, "overhang_5_prime": overhang_5prime, "overhang_3_prime": overhang_3prime}
 
     ## get best alignment
