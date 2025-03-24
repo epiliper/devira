@@ -15,12 +15,8 @@ def get_seq_by_header(fastas, header):
     print(f"No fasta found matching header {header}")
     return
 
-aligner = Align.PairwiseAligner()
+aligner = Align.PairwiseAligner(scoring = "blastn")
 aligner.mode = 'global'
-aligner.match_score = 2.0
-aligner.mismatch_score =  -1.0
-aligner.open_gap_score = -1.5
-aligner.extend_gap_score = -0.5
 
 def align_and_get_overlap(ref_record, query_record):
     ref_id = ref_record.id
@@ -55,6 +51,10 @@ def align_and_get_overlap(ref_record, query_record):
 
     ## get best alignment
     alignment = alignments[0]
+    if alignment.score <= 500:
+        return {"query_id": query_id, "overhang_5_prime": overhang_5prime, "overhang_3_prime": overhang_3prime}
+
+    print(f"Proceeding with alignment of score {alignment.score}")
 
     alignment = alignment.format("fasta")
     ## get just the sequences, not headers or newlines
