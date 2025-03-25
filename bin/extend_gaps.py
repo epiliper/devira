@@ -4,7 +4,7 @@ import argparse
 from Bio import SeqIO, Align
 import os
 import concurrent.futures
-from Bio.Seq import Seq
+from Bio.Seq import Seq, reverse_complement
 from Bio.SeqRecord import SeqRecord
 
 class AlnResult:
@@ -13,11 +13,11 @@ class AlnResult:
     overhang3: int
     seq: str
 
-    def __init__(self, id:str | None, overhang_5:int, overhang_3:int, seq:str):
+    def __init__(self, id:str | None, overhang_5:int, overhang_3:int, seq:str, reverse = False):
         self.id = id
         self.overhang5 = overhang_5
         self.overhang3 = overhang_3
-        self.seq = seq
+        self.seq = str(reverse_complement(seq)) if reverse else seq
 
     def get_5prime_overhang(self, n_fill: bool = False):
         if n_fill:
@@ -87,6 +87,7 @@ def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
 
     overhang_5prime = 0
     overhang_3prime = 0
+    reverse = False
 
     try:
         alignments = aligner.align(ref_seq, query_seq, strand = "+")
@@ -99,6 +100,9 @@ def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
 
     try:
         alignments = aligner.align(ref_seq, query_seq, strand = "-")
+        ## if we keep this alignment, we need to remember to reverse-complement the query sequence 
+        ## for downstream extension
+        reverse = True 
         if not alignments:
             return dud
 
@@ -141,7 +145,7 @@ def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
         else:
             break
 
-    return AlnResult(query_id, overhang_5prime, overhang_3prime, query_seq)
+    return AlnResult(query_id, overhang_5prime, overhang_3prime, query_seq, reverse)
 
 def find_max_overhangs(rec_to_extend: SeqRecord, query_recs: list[SeqRecord], threads: int) -> AlnSummary:
     """
