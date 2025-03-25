@@ -16,8 +16,10 @@ process EXTEND_SCAFFOLDS {
 
     """
     extend_gaps.py \\
-        -r $intermediate_scaffold \\
+        -s $intermediate_scaffold \\
+        -r $chosen_ref \\
         -q $contigs \\
-        -o $out
+        -o $out \\
+        -t $task.cpus
     """
 }
