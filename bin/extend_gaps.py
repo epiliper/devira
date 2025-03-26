@@ -124,13 +124,23 @@ def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
     overhang_3prime = 0
     reverse = False
 
-    alignment = attempt_align(ref_record, query_record, "+")
+    alignment_for = attempt_align(ref_record, query_record, "+")
+    alignment_rev = attempt_align(ref_record, query_record, "-")
 
-    if not alignment:
-        alignment = attempt_align(ref_record, query_record, "-")
+    ## two alignments exist, pick the strand with the better score
+    if alignment_for and alignment_rev:
+        if alignment_for.score > alignment_rev.score:
+            alignment = alignment_for
+        else:
+            alignment = alignment_rev
 
-    if not alignment:
+    ## no alignments
+    elif not alignment_for and not alignment_rev:
         return dud
+
+    ## just one alignment
+    else:
+        alignment = alignment_for if alignment_for else alignment_rev
 
     print(f"Proceeding with alignment of score {alignment.score}")
 
