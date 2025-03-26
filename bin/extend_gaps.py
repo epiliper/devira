@@ -13,7 +13,7 @@ class AlnResult:
     overhang3: int
     seq: str
 
-    def __init__(self, id:str | None, overhang_5:int, overhang_3:int, seq:str, reverse = False):
+    def __init__(self, id:str | None, overhang_5:int, overhang_3:int, seq:str, reverse: bool = False):
         self.id = id
         self.overhang5 = overhang_5
         self.overhang3 = overhang_3
@@ -28,7 +28,7 @@ class AlnResult:
         return len(over), over
 
     def get_3prime_overhang(self, n_fill: bool = False):
-        overhang_3_start_pos = len(self.seq) - 1 - self.overhang3
+        overhang_3_start_pos = len(self.seq) - self.overhang3
         if n_fill:
             over = ["N" for _ in range(overhang_3_start_pos, len(self.seq))]
         else:
@@ -55,7 +55,7 @@ class AlnSummary:
         found = False
         q = None
         for q in self.all_alns:
-            if getattr(q, attr) <= thres:
+            if q.id and getattr(q, attr) <= thres:
                 found = True
                 break
 
@@ -66,6 +66,9 @@ class AlnSummary:
 
 aligner = Align.PairwiseAligner(scoring = "blastn")
 aligner.mode = 'global'
+aligner.mismatch_score = -1.2
+aligner.open_gap_score = -10
+aligner.extend_gap_score = -0.1
 
 def load_fasta(fasta_file: str, load_first: bool) -> list[SeqRecord]:
     records = list(SeqIO.parse(fasta_file, "fasta"))
@@ -77,6 +80,37 @@ def load_fasta(fasta_file: str, load_first: bool) -> list[SeqRecord]:
 
     return records
 
+def get_longest_aln_above_score(aln: Align.PairwiseAlignments, min_score: int) -> Align.Alignment | None:
+    max = 0
+    ret = None
+    for a in aln:
+        if a.score > min_score:
+            coords = a.coordinates
+            a_len = coords[1][-1] - coords[1][0]
+            if a_len > max:
+                max = a_len
+                ret = a
+
+    return ret
+
+def attempt_align(ref_seq: SeqRecord, query_record: SeqRecord, strand: str, min_score: int = 50) -> Align.Alignment | None :
+    label = f"{ref_seq.id} - {query_record.id}; strand {strand}"
+    print(f"attempting alignment {label}")
+    try:
+        alignments = aligner.align(ref_seq.seq, query_record.seq, strand)
+        if not alignments:
+            return None
+        else:
+
+            if len(alignments) > 10:
+                return alignments[0] if alignments[0].score >= min_score else None
+
+            return get_longest_aln_above_score(alignments, min_score)
+            # return alignments[0]
+    except OverflowError:
+        print(f"Too many low-quality alignments for alignment {label}")
+        return None
+
 
 def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
     dud = AlnResult("", -1, -1, "") ## return in case no alignments found
@@ -84,37 +118,18 @@ def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
 
     query_id = query_record.id
     query_seq = query_record.seq
+    alignment = None
 
     overhang_5prime = 0
     overhang_3prime = 0
     reverse = False
 
-    try:
-        alignments = aligner.align(ref_seq, query_seq, strand = "+")
-        if not alignments:
-            return dud
+    alignment = attempt_align(ref_record, query_record, "+")
 
-    except OverflowError:
-        ## crappy alignment
-        print(f"{query_id}: reference alignment is poor with forward strand. Trying reverse...")
+    if not alignment:
+        alignment = attempt_align(ref_record, query_record, "-")
 
-    try:
-        alignments = aligner.align(ref_seq, query_seq, strand = "-")
-        ## if we keep this alignment, we need to remember to reverse-complement the query sequence 
-        ## for downstream extension
-        reverse = True 
-        if not alignments:
-            return dud
-
-    except OverflowError:
-        print(f"{query_id}: no suitable alignments found for either strand. Skipping...")
-        return dud
-
-    ## get best alignment
-    alignment = alignments[0]
-
-    if alignment.score <= 500:
-        print(f"{query_id}: no suitable alignments found for either strand. Skipping...")
+    if not alignment:
         return dud
 
     print(f"Proceeding with alignment of score {alignment.score}")
@@ -222,7 +237,7 @@ def main():
     if len(extended_record.seq) < len(ref.seq):
         print("assembly is still shorter than reference. Attempting to extend with reference. Using Ns...")
         results: AlnSummary = find_max_overhangs(extended_record, [ref], args.threads)
-        extended_record = extend_seq_w_overhangs(extended_record, results)
+        extended_record = extend_seq_w_overhangs(extended_record, results, n_fill = True)
     else:
         print("assembly longer than reference. Won't extend with reference.")
 
