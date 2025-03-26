@@ -50,8 +50,8 @@ def select_refs(sample_identifier, dist_tsv, ani_thres, align_ref_thres):
 
     # sort SKANI db hits first by fraction of ref genome covered, then by ANI
     data.sort(key = lambda row: (
-        float(row["Total_bases_covered"]),
         float(row["ANI"]),
+        float(row["Ref_50_ctg_len"]),
         float(row["Align_fraction_ref"])
         ), reverse = True)
 
