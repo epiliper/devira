@@ -1,11 +1,11 @@
-include { MEGAHIT                   } from '../modules/megahit'
-include { METASPADES                } from '../modules/metaspades'
-include { FILTER_AND_GLUE_CONTIGS   } from '../modules/filter_and_glue_contigs'
-include { EXTEND_SCAFFOLDS          } from '../modules/extend_scaffolds'
-include { GAPFILL_WITH_READS        } from '../modules/gapfill_with_reads'
-include { GAPFILL_WITH_REF          } from '../modules/gapfill_with_ref'
-
-include { REFERENCE_PREP            } from './reference_prep'
+include { MEGAHIT                                   } from '../modules/megahit'
+include { METASPADES                                } from '../modules/metaspades'
+include { FILTER_AND_GLUE_CONTIGS                   } from '../modules/filter_and_glue_contigs'
+include { EXTEND_SCAFFOLDS as EXTEND_WITH_CONTIGS   } from '../modules/extend_scaffolds'
+include { EXTEND_SCAFFOLDS as EXTEND_WITH_REF       } from '../modules/extend_scaffolds'
+include { GAPFILL_WITH_READS                        } from '../modules/gapfill_with_reads'
+include { GAPFILL_WITH_REF                          } from '../modules/gapfill_with_ref'
+include { REFERENCE_PREP                            } from './reference_prep'
 
 workflow CONTIG_GEN {
 
@@ -46,20 +46,26 @@ workflow CONTIG_GEN {
     .join(REFERENCE_PREP.out.contigs, by: [0, 1])
    )
 
-   EXTEND_SCAFFOLDS(
+   EXTEND_WITH_CONTIGS(
     FILTER_AND_GLUE_CONTIGS
     .out.intermediate_scaffold
     .join(REFERENCE_PREP.out.contigs, by: [0, 1])
    )
 
    GAPFILL_WITH_READS(
-    EXTEND_SCAFFOLDS
+    EXTEND_WITH_CONTIGS
     .out.extended_scaffold
     .join(REFERENCE_PREP.out.reads, by: [0, 1])
    )
 
+   EXTEND_WITH_REF(
+    GAPFILL_WITH_READS.out.gapfilled_scaffold
+    .join(REFERENCE_PREP.out.ref, by: [0, 1, 2])
+   )
+
    emit: 
-   contigs      = GAPFILL_WITH_READS.out.gapfilled_scaffold
+   //contigs      = GAPFILL_WITH_READS.out.gapfilled_scaffold
+   contigs      = EXTEND_WITH_REF.out.extended_scaffold
    reads        = REFERENCE_PREP.out.reads 
    contig_stats = FILTER_AND_GLUE_CONTIGS.out.contig_stats
 

@@ -86,7 +86,8 @@ def get_longest_aln_above_score(aln: Align.PairwiseAlignments, min_score: int) -
     for a in aln:
         if a.score > min_score:
             coords = a.coordinates
-            a_len = coords[1][-1] - coords[1][0]
+            a_len = abs(coords[1][-1] - coords[1][0])
+            print(a.score, a_len)
             if a_len > max:
                 max = a_len
                 ret = a
@@ -136,6 +137,7 @@ def align_and_get_overlap(ref_record: SeqRecord, query_record: SeqRecord):
 
     ## no alignments
     elif not alignment_for and not alignment_rev:
+        print(f"No alignments found for query {query_id} with either + or - strand.")
         return dud
 
     ## just one alignment
@@ -208,7 +210,7 @@ def extend_seq_w_overhangs(rec_to_extend: SeqRecord, results: AlnSummary, n_fill
             best_5prime = results.max_5_overhang
             ext_count, ext = best_5prime.get_5prime_overhang(n_fill)
             new_seq = ext + new_seq
-            print(f"extended {ref_id} 5' with {ext_count} bases from contig {best_5prime.id}")
+            print(f"extended {ref_id} 5' with {ext_count} bases from contig {best_5prime.id}; Used Ns: {n_fill}")
 
         if results.max_3_overhang:
             best_3prime = results.max_3_overhang
@@ -217,7 +219,7 @@ def extend_seq_w_overhangs(rec_to_extend: SeqRecord, results: AlnSummary, n_fill
             print(f"extended {ref_id} 3' with {ext_count} bases from contig {best_3prime.id}")
 
 
-        print(f"length before extension: {len(original_seq)}; length after extensions: {len(new_seq)}")
+        print(f"length before extension: {len(original_seq)}; length after extensions: {len(new_seq)}; Used Ns: {n_fill}")
         assert len(new_seq) >= len(original_seq), "Output sequence is shorter than supplied sequence"
         new_seq = "".join(new_seq)
 
@@ -229,27 +231,19 @@ def extend_seq_w_overhangs(rec_to_extend: SeqRecord, results: AlnSummary, n_fill
 def main():
     parser = argparse.ArgumentParser(description="Find which query sequence extends past the reference the most")
     _ = parser.add_argument("-s", "--scaffold", required=True, type=str, help="scaffold fasta")
-    _ = parser.add_argument("-r", "--reference", required=True, type=str, help="reference fasta")
     _ = parser.add_argument("-q", "--query", required=True, type=str, help="contig fasta")
     _ = parser.add_argument("-o", "--output", required=True, type=str, help="output for extended fasta")
     _ = parser.add_argument("-t", "--threads", required=False, type=int, default=os.cpu_count(), help="number of threads to use")
+    _ = parser.add_argument("-f", "--fill", required=False, action="store_true", help="if used, will extend ends with Ns instead of query overhang sequence")
     args = parser.parse_args()
 
-    ref = load_fasta(args.reference, load_first=True)[0]
     scaffold = load_fasta(args.scaffold, load_first=True)[0]
-    contigs = load_fasta(args.query, load_first=False)
+    query = load_fasta(args.query, load_first=False)
 
     ## attempt to extend scaffold with contigs
     ## if scaffold is still shorter than reference, extend scaffold ends with Ns up to reference ends
-    results: AlnSummary = find_max_overhangs(scaffold, contigs, args.threads)
-    extended_record = extend_seq_w_overhangs(scaffold, results)
-
-    if len(extended_record.seq) < len(ref.seq):
-        print("assembly is still shorter than reference. Attempting to extend with reference. Using Ns...")
-        results: AlnSummary = find_max_overhangs(extended_record, [ref], args.threads)
-        extended_record = extend_seq_w_overhangs(extended_record, results, n_fill = True)
-    else:
-        print("assembly longer than reference. Won't extend with reference.")
+    results: AlnSummary = find_max_overhangs(scaffold, query, args.threads)
+    extended_record = extend_seq_w_overhangs(scaffold, results, args.fill)
 
     with open(args.output, "w") as outf:
         outf.write(f">{extended_record.id}\n")

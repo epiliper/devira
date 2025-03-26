@@ -4,7 +4,7 @@ process GAPFILL_WITH_READS {
     container 'quay.io/epil02/adar:0.0.6'
 
     input: 
-    tuple val(meta), val(tax_info), path(scaffold_fasta), path(chosen_ref), val(ref_info), path(reads)
+    tuple val(meta), val(tax_info), val(ref_info), path(scaffold_fasta), path(reads)
 
     output:
     tuple val(meta), val(tax_info), val(ref_info), path("*gapfilled.fasta"), emit: gapfilled_scaffold

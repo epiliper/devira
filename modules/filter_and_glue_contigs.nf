@@ -8,7 +8,7 @@ process FILTER_AND_GLUE_CONTIGS {
 
     output:
 
-    tuple val(meta), val(tax_info), path("*intermediate_scaffold.fasta"), path(ref), val(ref_info), emit: intermediate_scaffold
+    tuple val(meta), val(tax_info), val(ref_info), path("*intermediate_scaffold.fasta"), emit: intermediate_scaffold
     tuple val(meta), val(tax_info), val(ref_info), path("*_contig_stats.tsv"), emit: contig_stats
 
     script:
