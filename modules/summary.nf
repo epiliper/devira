@@ -19,8 +19,8 @@ process SUMMARY {
     """
     taxon=${tax_info.name}
     taxon_reads=${tax_info.num_reads}
-    contig_header=\$(sed -n '1p' $contig_stats | tr '\t\n' '  ')
-    contig_values=\$(sed -n '2p' $contig_stats | tr '\t\n' '  ')
+    contig_header=\$(sed -n '1p' $contig_stats | tr '\t\n\r' '   ')
+    contig_values=\$(sed -n '2p' $contig_stats | tr '\t\n\r' '   ')
 
     # raw reads and trimmed reads
     raw_reads=\$(grep -A1 "before filtering:" ${fastp_trim_log} | grep 'total reads:' | cut -d: -f2 | tr -d " " | awk 'NF{sum+=\$1} END {print sum}')
@@ -74,14 +74,14 @@ process SUMMARY {
     # OUTPUT TO TSV #
     ##################
 
-    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
         "sample_name" "raw_reads" "trimmed_reads" "pct_reads_trimmed" "taxon" "taxon_reads"\
         \$contig_header "ref_tag" "ref_acc"\
         "mapped_reads_ref" "pct_reads_mapped_ref" "coverage_ref" "mean_depth_ref" \
         "mapped_reads_c1" "pct_reads_mapped_c1" "coverage_c1" "mean_depth_c1" \
         "consensus_length" "num_ns_consensus" "pct_ns" "num_ambiguous" > ${prefix}_summary.tsv
 
-    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
         "$meta.id" "\$raw_reads" "\$trimmed_reads" "\$pct_reads_trimmed_formatted" "\$taxon" "\$taxon_reads" \
         \$contig_values "${ref_info.tag}" "${ref_info.acc}"\
         "\$mapped_reads_ref" "\$pct_reads_mapped_formatted_ref" "\$coverage_ref" "\$mean_depth_ref" \

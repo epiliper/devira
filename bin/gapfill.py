@@ -5,6 +5,15 @@ import os
 import Bio.SeqIO
 import argparse
 import time
+import logging
+
+log = logging.getLogger("gapfill")
+log.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+log.addHandler(console_handler)
 
 def run_gap2seq(in_scaffolds, out_scaffolds, reads, kmer_thres, kmer_size, rand_seed):
 
@@ -24,7 +33,7 @@ def run_gap2seq(in_scaffolds, out_scaffolds, reads, kmer_thres, kmer_size, rand_
             rand_seed
             ]
 
-    print(cmd)
+    log.debug(cmd)
     subprocess.run(cmd)
 
 def gapfill(in_scaffold, in_fastq, out_scaffold, solid_kmer_thresholds=[3], kmer_sizes=(90, 80, 70, 60, 50, 40, 31),
@@ -63,10 +72,10 @@ def gapfill(in_scaffold, in_fastq, out_scaffold, solid_kmer_thresholds=[3], kmer
             for kmer_size in kmer_sizes:
 
                 if not any('N'*min_gap_to_close in str(rec.seq) for rec in Bio.SeqIO.parse(prev_scaffold, 'fasta')):
-                    print('no gaps left, quittting gap2seq early')
+                    log.info('no gaps left, quittting gap2seq early')
                     break
                 if time.time() > stop_time:
-                    print('Time limit for gap closing reached')
+                    log.info('Time limit for gap closing reached')
                     break
 
                 filled_scaffold = 'gap2seq-filled.s{}.k{}.fasta'.format(kmer_thres, kmer_size)
@@ -76,12 +85,11 @@ def gapfill(in_scaffold, in_fastq, out_scaffold, solid_kmer_thresholds=[3], kmer
 
         Bio.SeqIO.convert(prev_scaffold, 'fasta', out_scaffold, 'fasta')
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--in_scaffold", help = "The scaffolds you want gapfilled, with Ns in between each contig")
-parser.add_argument("--in_reads", help = "reads to use for gapfilling. Should be a string in the form of '<r1_file>, <r2_file>' if using paired_end data")
-parser.add_argument("--out_scaffold", help = "The output file for the gap-filled scaffold")
-args = parser.parse_args()
-
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--in_scaffold", help = "The scaffolds you want gapfilled, with Ns in between each contig")
+    parser.add_argument("--in_reads", help = "reads to use for gapfilling. Should be a string in the form of '<r1_file>, <r2_file>' if using paired_end data")
+    parser.add_argument("--out_scaffold", help = "The output file for the gap-filled scaffold")
+    args = parser.parse_args()
     gapfill(args.in_scaffold, args.in_reads, args.out_scaffold)
