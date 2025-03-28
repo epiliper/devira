@@ -1,6 +1,6 @@
 process ALIGN_CONTIGS_TO_REF {
     tag "${task.ext.prefix}"
-    label 'process_low'
+    label 'process_single'
     container "quay.io/epil02/revica-strm:0.0.4"
 
     input: 

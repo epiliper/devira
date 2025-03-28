@@ -1,6 +1,6 @@
 process FILTER_AND_GLUE_CONTIGS {
     tag "${task.ext.prefix}"
-    label 'process_high'
+    label 'process_single'
     container "quay.io/epil02/gap2seq_bio_pysam:0.0.2"
 
 
