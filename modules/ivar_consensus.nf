@@ -23,7 +23,7 @@ process IVAR_CONSENSUS {
 
     if [[ \$(basename "$bam") = "FAILED.sorted.bam" ]]; then
         echo "Skipping $prefix consensus with $ref; failed depth/coverage previously"
-        rm *.fa
+        rm *.fa*
         exit 0 # shouldn't cause fail if the outputs are optional
     fi
 
