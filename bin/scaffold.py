@@ -35,7 +35,7 @@ def report_contig_stats(query_seqs: list[str], num_fastas: int, scaf_len: int, o
     longest = lengths[0]
     shortest = lengths[-1]
 
-    def get_N50(query_lengths: list[int]):
+    def get_N50(lengths: list[int]):
         """
         Get N50 from a list of contig lengths sorted in descending order
         """
@@ -60,45 +60,51 @@ def report_contig_stats(query_seqs: list[str], num_fastas: int, scaf_len: int, o
 class AlignedSequence:
     seq: str
     aln_record: pysam.AlignedSegment
+    id: str
     length: int
-    start: int
-    end: int
+    aln_start: int
+    aln_end: int
 
     def extend_with_clipping(self):
         rec = self.aln_record
         length = rec.query_alignment_length
         cig = rec.cigartuples
-        self.start = self.aln_record.query_alignment_start
-        self.end = self.aln_record.query_alignment_end
+        self.aln_start = self.aln_record.reference_start
+
+        ## calculate reference end if itn's not available
+        end = self.aln_record.reference_end 
+        if not end:
+            end = self.aln_record.query_alignment_length + self.aln_record.reference_start
+
+        self.aln_end = end
 
         if not cig: return
 
         ## if the alignment contains soft- (4) or hard-clipping (5), adjust the length to include clipped bases.
         ## We're doing this because we want as little reference bias as possible, and don't want to trim contig sequence yet.
 
-        # limit start ext
         if cig[0][0] in [4, 5]:
-            pad = min(500, cig[0][1])
+            pad = min(500, cig[0][1]) # limit start ext
             length += pad
-            self.start -= pad
+            self.aln_start -= pad
 
         for c in cig[1:-1]:
             if c[0] in [4, 5]:
                 length += c[1]
-                self.end += c[1]
+                self.aln_end += c[1]
 
         # limit start ext
         if len(cig) > 1 and cig[-1][0] in [4, 5]:
-            pad = min(500, cig[-1][1])
+            pad = min(500, cig[-1][1]) # limit end ext
             length += pad
-            self.end += pad
+            self.aln_end += pad
 
         self.length = length
         if self.length > len(self.seq):
-            log.fatal(f"Error: cigar length is longer than query sequence: {self.length}: {len(self.seq)}")
+            log.fatal(f"{self.id}: Error: cigar length is longer than query sequence: {self.length}: {len(self.seq)}")
             exit(1)
 
-        log.info(f"loaded sequence with length {self.length} from cigar {cig} from {self.start} - {self.end}")
+        log.info(f"{self.id}: extended to length {self.length} from cigar {cig} along coordinates {self.aln_start} - {self.aln_end}")
 
     def load_seq(self, seq: str, rev: bool):
         if rev:
@@ -108,6 +114,7 @@ class AlignedSequence:
 
     def __init__(self, rec: pysam.AlignedSegment, seq: str):
         self.aln_record = rec
+        self.id = rec.query_name or "_NAME_NOT_FOUND_"
         self.load_seq(seq, rec.is_reverse)
         self.extend_with_clipping()
 
@@ -145,6 +152,7 @@ def load_alignments(file: str, fastas: dict[str, str]) -> tuple[int, list[Aligne
 
     for rec in aln_file.fetch():
         if not rec.is_mapped or rec.is_supplementary:
+            log.info(f"Skipping loading alignment {rec.query_name}; mapped: {rec.is_mapped}; supplementary aln: {rec.is_supplementary}")
             continue
         try:
             seq = fastas[rec.query_name] 
@@ -207,34 +215,34 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
     """
     supercontig = check_if_longer_than_ref(recs, ref_len)
     if supercontig:
-        log.info("Found supercontig for reference...")
-        seq = supercontig.seq[supercontig.start:supercontig.end]
+        log.info(f"{supercontig.id}:Found supercontig for reference, from coords {supercontig.aln_start} - {supercontig.aln_end}")
+        seq = supercontig.seq[0:supercontig.length]
         return seq
 
     seq = []
-    recs.sort(key = lambda x: x.start)
-    start, end = recs[0].start, -1 
+    recs.sort(key = lambda x: x.aln_start)
+    start, end = recs[0].aln_start, -1 
     prev_len = 0
     num_ns = 0
     
     for r in recs:
-        if r.start > end and end != -1:
+        if r.aln_start > end and end != -1:
             # a gap exists between this contig and the previous one.
-            seq += ["N"] * (r.start - end)
-            seq += list(r.seq)[0: r.length]
-            num_ns += (r.start - end)
+            add = ["N"] * (r.aln_start - end) + list(r.seq[0: r.length])
+            num_ns += (r.aln_start - end)
 
-        elif r.start < end and end != -1:
+        elif r.aln_start < end and end != -1:
             # part of this contig has already been covered by the previous one.
-            seq += list(r.seq)[end - r.start:]
+            add = list(r.seq)[end - r.aln_start:]
 
         else:
-            seq += list(r.seq)
+            # this contig starts immediately after the previous contig (or is the first one)
+            add = list(r.seq)
 
-        delta = len(seq) - prev_len
-        prev_len = end = prev_len + delta
+        seq += add
+        prev_len = end = prev_len + len(add)
 
-        log.info(f"glued {delta} bases; Sequence has {num_ns} Ns...")
+        log.info(f"{r.id}: glued {len(add)} bases; Sequence has {num_ns} Ns...")
 
     if pad_ends:
         if start > 0:
@@ -256,7 +264,7 @@ def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: st
     ref_len, aligns = load_alignments(align_file, fasta_dict)
 
     for a in aligns:
-        log.debug(a.seq, a.length, a.start, a.end, a.aln_record.query_name)
+        log.debug(a.seq, a.length, a.aln_start, a.aln_end, a.aln_record.query_name)
 
     ## do the scaffolding with just the contigs, don't fill end gaps
     seq = glue_alns_across_ref(aligns, ref_len, False)
