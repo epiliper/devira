@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import pysam
-from sys import exit, version
+import sys
 from Bio import SeqIO
 from Bio.Seq import reverse_complement
 import argparse
@@ -11,7 +11,7 @@ import random
 
 log = logging.getLogger("scaffold")
 log.setLevel(logging.DEBUG)
-console_handler = logging.StreamHandler()
+console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
@@ -68,27 +68,37 @@ class AlignedSequence:
         rec = self.aln_record
         length = rec.query_alignment_length
         cig = rec.cigartuples
-        self.start = self.aln_record.reference_start - 1 or 0
-        self.end = self.aln_record.reference_end - 1 or 0
+        self.start = self.aln_record.query_alignment_start
+        self.end = self.aln_record.query_alignment_end
 
         if not cig: return
 
         ## if the alignment contains soft- (4) or hard-clipping (5), adjust the length to include clipped bases.
         ## We're doing this because we want as little reference bias as possible, and don't want to trim contig sequence yet.
-        if cig[0][0] in [4, 5]:
-            length += cig[0][1]
-            self.start -= cig[0][1]
 
-        for c in cig[1:]:
+        # limit start ext
+        if cig[0][0] in [4, 5]:
+            pad = min(500, cig[0][1])
+            length += pad
+            self.start -= pad
+
+        for c in cig[1:-1]:
             if c[0] in [4, 5]:
                 length += c[1]
-                log.debug(c[0], c[1])
                 self.end += c[1]
+
+        # limit start ext
+        if len(cig) > 1 and cig[-1][0] in [4, 5]:
+            pad = min(500, cig[-1][1])
+            length += pad
+            self.end += pad
 
         self.length = length
         if self.length > len(self.seq):
             log.fatal(f"Error: cigar length is longer than query sequence: {self.length}: {len(self.seq)}")
             exit(1)
+
+        log.info(f"loaded sequence with length {self.length} from cigar {cig} from {self.start} - {self.end}")
 
     def load_seq(self, seq: str, rev: bool):
         if rev:
@@ -179,7 +189,9 @@ def check_if_longer_than_ref(recs: list[AlignedSequence], ref_len: int) -> Align
     r = recs[0]
 
     if r.length > ref_len:
-        return ret
+        ret = r
+
+    return ret
 
 def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bool = False) -> str:
     """
@@ -195,7 +207,9 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
     """
     supercontig = check_if_longer_than_ref(recs, ref_len)
     if supercontig:
-        return supercontig.seq
+        log.info("Found supercontig for reference...")
+        seq = supercontig.seq[supercontig.start:supercontig.end]
+        return seq
 
     seq = []
     recs.sort(key = lambda x: x.start)
