@@ -118,7 +118,6 @@ class AlignedSequence:
         self.load_seq(seq, rec.is_reverse)
         self.extend_with_clipping()
 
-
 def load_alignments(file: str, fastas: dict[str, str]) -> tuple[int, list[AlignedSequence]]:
     """
     Parses a bam file, loads all mapped and primary alignments into [AlignedSequence] with corresponding query sequence
@@ -164,9 +163,9 @@ def load_alignments(file: str, fastas: dict[str, str]) -> tuple[int, list[Aligne
 
     return (ref_len, records)
 
-def load_fastas(file: str) -> tuple[int, dict[str, str]]:
+def load_fastas(file: str, min_seq_length) -> tuple[int, dict[str, str]]:
     """
-    creates a <fasta_id>:<fasta_sequence> dict for each entry in a given fasta file
+    creates a dict of <fasta_id>:<fasta_sequence> mappings for each entry in a given fasta file
 
     Args: 
         file: fasta file
@@ -175,7 +174,7 @@ def load_fastas(file: str) -> tuple[int, dict[str, str]]:
         int: number of fasta records loaded
         dict[str, str]: dictionary mapping fasta header to fasta seq
     """
-    fasta_dict = { record.id : str(record.seq) for record in SeqIO.parse(file, "fasta") }
+    fasta_dict = { record.id : str(record.seq) for record in SeqIO.parse(file, "fasta") if len(record.seq) > min_seq_length }
     num_fastas = len(fasta_dict)
     return num_fastas, fasta_dict
 
@@ -221,17 +220,16 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
 
     seq = []
     recs.sort(key = lambda x: x.aln_start)
-    start, end = recs[0].aln_start, -1 
-    prev_len = 0
+    start, end = recs[0].aln_start, 0
     num_ns = 0
     
     for r in recs:
-        if r.aln_start > end and end != -1:
+        if r.aln_start > end and end != 0:
             # a gap exists between this contig and the previous one.
             add = ["N"] * (r.aln_start - end) + list(r.seq[0: r.length])
             num_ns += (r.aln_start - end)
 
-        elif r.aln_start < end and end != -1:
+        elif r.aln_start < end and end != 0:
             # part of this contig has already been covered by the previous one.
             add = list(r.seq)[end - r.aln_start:]
 
@@ -240,9 +238,14 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
             add = list(r.seq)
 
         seq += add
-        prev_len = end = prev_len + len(add)
+        delta = len(add)
 
-        log.info(f"{r.id}: glued {len(add)} bases; Sequence has {num_ns} Ns...")
+        # make sure end only keeps track of bases added after ref coord 0; it shouldn't count bases added before
+        if r.aln_start < 0:
+            delta += r.aln_start
+
+        end += delta
+        log.info(f"{r.id}: glued {delta} bases; Sequence has {num_ns} Ns...")
 
     if pad_ends:
         if start > 0:
@@ -259,8 +262,9 @@ def pad_with_ns(seq: str, l_pad: int, r_pad: int):
     return "".join(["N"] * l_pad + list(seq) + ["N"] * r_pad)
 
 
-def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: str, report_file: str):
-    num_fastas, fasta_dict = load_fastas(query_fasta)
+def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: str, report_file: str, min_seq_length: int):
+    log.info(f"Filtering contigs used for tiling to length >= {min_seq_length} bp")
+    num_fastas, fasta_dict = load_fastas(query_fasta, min_seq_length)
     ref_len, aligns = load_alignments(align_file, fasta_dict)
 
     for a in aligns:
@@ -308,6 +312,7 @@ if __name__ == "__main__":
     _ = parser.add_argument("-o", "--output", type = str, help = "name of output fasta file")
     _ = parser.add_argument("-p", "--prefix", type = str, help = "name to use for scaffold")
     _ = parser.add_argument("-c", "--contig_report", type = str, help = "name of contig stats file")
+    _ = parser.add_argument("-m", "--min_contig_length", type = int, required = False, default = 200, help = "minimum length of raw contig sequence for contig to be used in scaffolding")
     args, _ = parser.parse_known_args()
 
-    main(args.alignment, args.query, args.output, args.prefix, args.reads, args.contig_report)
+    main(args.alignment, args.query, args.output, args.prefix, args.reads, args.contig_report, args.min_contig_length)
