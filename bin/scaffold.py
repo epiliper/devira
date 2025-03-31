@@ -59,6 +59,7 @@ def report_contig_stats(query_seqs: list[str], num_fastas: int, scaf_len: int, o
 
 class AlignedSequence:
     seq: str
+    ref_len: int
     aln_record: pysam.AlignedSegment
     id: str
     length: int
@@ -80,11 +81,14 @@ class AlignedSequence:
 
         if not cig: return
 
+        ext_limit_l = 500 + (self.ref_len - self.aln_start)
+        ext_limit_r = 500 + (self.ref_len - self.aln_end)
+
         ## if the alignment contains soft- (4) or hard-clipping (5), adjust the length to include clipped bases.
         ## We're doing this because we want as little reference bias as possible, and don't want to trim contig sequence yet.
 
         if cig[0][0] in [4, 5]:
-            pad = min(500, cig[0][1]) # limit start ext
+            pad = min(ext_limit_l, cig[0][1]) # limit start ext
             length += pad
             self.aln_start -= pad
 
@@ -95,7 +99,7 @@ class AlignedSequence:
 
         # limit start ext
         if len(cig) > 1 and cig[-1][0] in [4, 5]:
-            pad = min(500, cig[-1][1]) # limit end ext
+            pad = min(ext_limit_r, cig[-1][1]) # limit end ext
             length += pad
             self.aln_end += pad
 
@@ -112,8 +116,9 @@ class AlignedSequence:
         else:
             self.seq = seq
 
-    def __init__(self, rec: pysam.AlignedSegment, seq: str):
+    def __init__(self, rec: pysam.AlignedSegment, seq: str, ref_len: int):
         self.aln_record = rec
+        self.ref_len = ref_len
         self.id = rec.query_name or "_NAME_NOT_FOUND_"
         self.load_seq(seq, rec.is_reverse)
         self.extend_with_clipping()
@@ -159,7 +164,7 @@ def load_alignments(file: str, fastas: dict[str, str]) -> tuple[int, list[Aligne
             log.fatal(f"sequence for {rec.query_name} not found in bam file. Exiting...")
             exit(1)
 
-        records.append(AlignedSequence(rec, seq))
+        records.append(AlignedSequence(rec, seq, ref_len))
 
     return (ref_len, records)
 
@@ -224,8 +229,8 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
     num_ns = 0
     
     for r in recs:
-        if r.aln_start > end and end != 0:
-            # a gap exists between this contig and the previous one.
+        if r.aln_start > end:
+            # a gap exists between this contig and either 1) the 0th reference coord or 2) the previous contig.
             add = ["N"] * (r.aln_start - end) + list(r.seq[0: r.length])
             num_ns += (r.aln_start - end)
 
@@ -240,12 +245,12 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
         seq += add
         delta = len(add)
 
+        log.info(f"{r.id}: glued {delta} bases; Sequence has {num_ns} Ns...")
+
         # make sure end only keeps track of bases added after ref coord 0; it shouldn't count bases added before
-        if r.aln_start < 0:
-            delta += r.aln_start
+        delta += min(0, r.aln_start)
 
         end += delta
-        log.info(f"{r.id}: glued {delta} bases; Sequence has {num_ns} Ns...")
 
     if pad_ends:
         if start > 0:
