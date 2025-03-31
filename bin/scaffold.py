@@ -72,7 +72,7 @@ class AlignedSequence:
         cig = rec.cigartuples
         self.aln_start = self.aln_record.reference_start
 
-        ## calculate reference end if itn's not available
+        ## calculate reference end if it's not available
         end = self.aln_record.reference_end 
         if not end:
             end = self.aln_record.query_alignment_length + self.aln_record.reference_start
@@ -81,7 +81,7 @@ class AlignedSequence:
 
         if not cig: return
 
-        ext_limit_l = 500 + (self.ref_len - self.aln_start)
+        ext_limit_l = 500 + self.aln_start
         ext_limit_r = 500 + (self.ref_len - self.aln_end)
 
         ## if the alignment contains soft- (4) or hard-clipping (5), adjust the length to include clipped bases.
@@ -97,7 +97,6 @@ class AlignedSequence:
                 length += c[1]
                 self.aln_end += c[1]
 
-        # limit start ext
         if len(cig) > 1 and cig[-1][0] in [4, 5]:
             pad = min(ext_limit_r, cig[-1][1]) # limit end ext
             length += pad
@@ -200,7 +199,8 @@ def check_if_longer_than_ref(recs: list[AlignedSequence], ref_len: int) -> Align
     ret: AlignedSequence | None = None
     r = recs[0]
 
-    if r.length > ref_len:
+    ## this contig must span from the start of (or before) the reference, until the end or after
+    if r.length >= ref_len and r.aln_start <= 0:
         ret = r
 
     return ret
@@ -279,6 +279,7 @@ def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: st
     seq = glue_alns_across_ref(aligns, ref_len, False)
 
     ## if we have a significant number of continuous Ns, then try to gapfill with Gap2Seq
+    seq = seq.lstrip("N").rstrip("N") # strip leading and trailing Ns, which otherwise make gap2seq crash
     if "".join(["N"] * 10) in seq:
 
         temp = f"{random.randint(1_000_000, 9_999_999)}.fa"
