@@ -10,6 +10,7 @@ workflow CONTIG_GEN {
    reads_meta       // tuple val(meta), val(tax_info), path(reads)
    contig_method    // val(contig_method)
    ref_ch           // path(ref)
+   min_contig_length // val(length)
 
    main:
 
@@ -46,7 +47,8 @@ workflow CONTIG_GEN {
    FILTER_AND_GLUE_CONTIGS(
     ALIGN_CONTIGS_TO_REF.out.alignment
     .join(REFERENCE_PREP.out.contigs, by: [0, 1])
-    .join(REFERENCE_PREP.out.reads, by: [0, 1])
+    .join(REFERENCE_PREP.out.reads, by: [0, 1]),
+    min_contig_length
    )
 
    emit: 

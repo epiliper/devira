@@ -6,6 +6,7 @@ process FILTER_AND_GLUE_CONTIGS {
 
     input: 
     tuple val(meta), val(tax_info), val(ref_info), path(aln), path(contigs), path(reads)
+    val(min_contig_length)
 
     output:
     tuple val(meta), val(tax_info), val(ref_info), path("*intermediate_scaffold.fasta"), emit: intermediate_scaffold
@@ -22,6 +23,8 @@ process FILTER_AND_GLUE_CONTIGS {
         -q $contigs \\
         -r $reads_in \\
         -o ${prefix}_intermediate_scaffold.fasta \\
-        -p ${prefix} -c $contig_stats
+        -p ${prefix}  \\
+        -c $contig_stats \\
+        -l $min_contig_length 
     """
 }

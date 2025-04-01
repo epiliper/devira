@@ -63,7 +63,8 @@ workflow {
     CONTIG_GEN(
         ch_sample_input,
         params.contig_method,
-        file(params.refs)
+        file(params.refs),
+        params.min_contig_length
     )
 
     CONSENSUS_ASSEMBLY(

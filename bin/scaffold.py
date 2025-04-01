@@ -17,6 +17,8 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 console_handler.setFormatter(formatter)
 log.addHandler(console_handler)
 
+INSUFFICIENT_LENGTH = "_INSUF_LENGTH_"
+
 def report_contig_stats(query_seqs: list[str], num_fastas: int, scaf_len: int, output_file: str):
     """
     Reports N50, number of total and filtered fastas, and scaffold len to an output TSV file.
@@ -87,16 +89,19 @@ class AlignedSequence:
         ## if the alignment contains soft- (4) or hard-clipping (5), adjust the length to include clipped bases.
         ## We're doing this because we want as little reference bias as possible, and don't want to trim contig sequence yet.
 
+        # left clip detected
         if cig[0][0] in [4, 5]:
             pad = min(ext_limit_l, cig[0][1]) # limit start ext
             length += pad
             self.aln_start -= pad
 
+        # interior clipping detected
         for c in cig[1:-1]:
             if c[0] in [4, 5]:
                 length += c[1]
                 self.aln_end += c[1]
 
+        # right clip detected
         if len(cig) > 1 and cig[-1][0] in [4, 5]:
             pad = min(ext_limit_r, cig[-1][1]) # limit end ext
             length += pad
@@ -122,7 +127,7 @@ class AlignedSequence:
         self.load_seq(seq, rec.is_reverse)
         self.extend_with_clipping()
 
-def load_alignments(file: str, fastas: dict[str, str]) -> tuple[int, list[AlignedSequence]]:
+def load_alignments(file: str, fastas: dict[str, str], min_seq_length: int) -> tuple[int, list[AlignedSequence]]:
     """
     Parses a bam file, loads all mapped and primary alignments into [AlignedSequence] with corresponding query sequence
 
@@ -157,17 +162,23 @@ def load_alignments(file: str, fastas: dict[str, str]) -> tuple[int, list[Aligne
         if not rec.is_mapped or rec.is_supplementary:
             log.info(f"Skipping loading alignment {rec.query_name}; mapped: {rec.is_mapped}; supplementary aln: {rec.is_supplementary}")
             continue
+
         try:
+
             seq = fastas[rec.query_name] 
+            if len(seq) < min_seq_length:
+                log.info(f"Skipping loading alignment for {rec.query_name}; contig sequence is too short: {len(seq)} / {min_seq_length} ")
+                continue
+
         except KeyError:
-            log.fatal(f"sequence for {rec.query_name} not found in bam file. Exiting...")
+            log.info(f"Sequence for alignment not found")
             exit(1)
 
         records.append(AlignedSequence(rec, seq, ref_len))
 
     return (ref_len, records)
 
-def load_fastas(file: str, min_seq_length) -> tuple[int, dict[str, str]]:
+def load_fastas(file: str) -> tuple[int, dict[str, str]]:
     """
     creates a dict of <fasta_id>:<fasta_sequence> mappings for each entry in a given fasta file
 
@@ -178,7 +189,7 @@ def load_fastas(file: str, min_seq_length) -> tuple[int, dict[str, str]]:
         int: number of fasta records loaded
         dict[str, str]: dictionary mapping fasta header to fasta seq
     """
-    fasta_dict = { record.id : str(record.seq) for record in SeqIO.parse(file, "fasta") if len(record.seq) > min_seq_length }
+    fasta_dict = { record.id : str(record.seq) for record in SeqIO.parse(file, "fasta") }
     num_fastas = len(fasta_dict)
     return num_fastas, fasta_dict
 
@@ -269,8 +280,8 @@ def pad_with_ns(seq: str, l_pad: int, r_pad: int):
 
 def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: str, report_file: str, min_seq_length: int):
     log.info(f"Filtering contigs used for tiling to length >= {min_seq_length} bp")
-    num_fastas, fasta_dict = load_fastas(query_fasta, min_seq_length)
-    ref_len, aligns = load_alignments(align_file, fasta_dict)
+    num_fastas, fasta_dict = load_fastas(query_fasta)
+    ref_len, aligns = load_alignments(align_file, fasta_dict, min_seq_length)
 
     for a in aligns:
         log.debug(a.seq, a.length, a.aln_start, a.aln_end, a.aln_record.query_name)
@@ -318,7 +329,7 @@ if __name__ == "__main__":
     _ = parser.add_argument("-o", "--output", type = str, help = "name of output fasta file")
     _ = parser.add_argument("-p", "--prefix", type = str, help = "name to use for scaffold")
     _ = parser.add_argument("-c", "--contig_report", type = str, help = "name of contig stats file")
-    _ = parser.add_argument("-m", "--min_contig_length", type = int, required = False, default = 200, help = "minimum length of raw contig sequence for contig to be used in scaffolding")
+    _ = parser.add_argument("-l", "--min_contig_length", type = int, required = False, default = 300, help = "minimum length of raw contig sequence for contig to be used in scaffolding")
     args, _ = parser.parse_known_args()
 
     main(args.alignment, args.query, args.output, args.prefix, args.reads, args.contig_report, args.min_contig_length)

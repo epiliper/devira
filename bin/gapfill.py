@@ -34,7 +34,8 @@ def run_gap2seq(in_scaffolds, out_scaffolds, reads, kmer_thres, kmer_size, rand_
             ]
 
     log.debug(cmd)
-    subprocess.run(cmd)
+    with open("gap2seq.log", "a") as outf:
+        subprocess.run(cmd, stdout=outf)
 
 def gapfill(in_scaffold, in_fastq, out_scaffold, solid_kmer_thresholds=[3], kmer_sizes=(90, 80, 70, 60, 50, 40, 31),
                 min_gap_to_close=4, time_soft_limit_minutes=60.0, random_seed=0):
