@@ -19,14 +19,17 @@ process MEGAHIT {
     if [ "${meta.single_end}" = true ]; then
         megahit \\
         -r ${reads} \\
-        --presets meta-sensitive \\
-        -o ${meta.id}
+        -o ${meta.id} \\
+        --k-min 21 \\
+        --k-max 255
 
     else
         megahit \\
         -1 ${reads[0]} \\
         -2 ${reads[1]} \\
-        -o ${meta.id}
+        -o ${meta.id} \\
+        --k-min 21 \\
+        --k-max 255
     fi
     """
 
