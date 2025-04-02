@@ -21,7 +21,8 @@ process MEGAHIT {
         -r ${reads} \\
         -o ${meta.id} \\
         --k-min 21 \\
-        --k-max 255
+        --k-max 255 \\
+        --k-step 8
 
     else
         megahit \\
@@ -29,7 +30,8 @@ process MEGAHIT {
         -2 ${reads[1]} \\
         -o ${meta.id} \\
         --k-min 21 \\
-        --k-max 255
+        --k-max 255 \\
+        --k-step 8
     fi
     """
 

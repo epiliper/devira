@@ -17,8 +17,6 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 console_handler.setFormatter(formatter)
 log.addHandler(console_handler)
 
-INSUFFICIENT_LENGTH = "_INSUF_LENGTH_"
-
 def report_contig_stats(query_seqs: list[str], num_fastas: int, scaf_len: int, output_file: str):
     """
     Reports N50, number of total and filtered fastas, and scaffold len to an output TSV file.
@@ -95,8 +93,8 @@ class AlignedSequence:
             length += pad
             self.aln_start -= pad
 
-        # interior clipping detected
         for c in cig[1:-1]:
+            # interior clipping detected
             if c[0] in [4, 5]:
                 length += c[1]
                 self.aln_end += c[1]
