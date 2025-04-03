@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import sys
+from collections import defaultdict
+import os
+
+def header(s):
+    return f"{B_GREEN}{s}{CLR}"
+
+B_GREEN = "\033[1;32m"
+B_YELLOW = "\033[1;33m"
+B_RED = "\033[1;31m"
+B_BLUE = "\033[1;34m"
+B_MAGENTA = "\033[1;35m"
+CLR = "\033[0m"
+
+ARG_TEXT=f"{B_MAGENTA}TEXT{CLR}"
+ARG_PATH=f"{B_YELLOW}PATH{CLR}"
+ARG_INT=f"{B_BLUE}INT{CLR}"
+ARG_FLAG=f"{B_RED}FLAG{CLR}"
+
+HELP = f"""
+DeViRA - Denovo Viral Reference-assisted Assembly
+
+{header("USAGE:")}
+devira -i {B_BLUE}PATH{CLR} (other options)
+
+{header("Input/output:")}
+-i/--input_dir      {ARG_PATH}      Input path (should be a directory) with FASTQ/FASTQ.gz files
+--output            {ARG_PATH}      Output directory (default: 'output')
+--run_name          {ARG_TEXT}      Name of the analysis run (default: 'run')
+--refs              {ARG_PATH}      Reference FASTA file (default: uses pipeline's embedded assets/ref.fa)
+--print_log         {ARG_FLAG}      Print pipeline output to screen
+
+{header("Runtime")}
+-profile            {ARG_TEXT}      Use with "docker" to run the pipeline with docker (avoids having to download all software used)
+-c                  {ARG_PATH}      A nextflow .config file, used for overriding runtime args or specifying details for a run on a cloud provider
+
+{header("Subsampling")}
+--subsample_raw     {ARG_INT}       Subsample raw reads to this number (optional)
+
+{header("FASTP")}
+--skip_fastp        {ARG_FLAG}      Skip fastp preprocessing step
+--adapter_fasta     {ARG_PATH}      Custom adapter FASTA file (default: uses pipeline's assets/adapter.fasta)
+--trim_len          {ARG_PATH}      Filter out reads below this length after trimming (default: 50)
+--save_merged       {ARG_FLAG}      Save merged reads from fastp
+
+{header("MultiQC")}
+--skip_multiqc      {ARG_FLAG}      Skip MultiQC report generation
+
+{header("Kraken2")}
+--kraken2_db        {ARG_PATH}      Path to Kraken2 database (default: uses pipeline's kraken2_db)
+--taxids            {ARG_PATH}      Custom taxonomic IDs file (default: uses pipeline's assets/taxids.tsv)
+
+{header("Contig options")}
+--contig_method     {ARG_TEXT}      Method for contig generation (default: 'megahit'), options = ('metaspades', 'megahit')
+--min_contig_length {ARG_INT}       Minimum contig length for scaffolding (default: 300)
+
+{header("Compute resources")}
+--max_cpus          {ARG_INT}       Maximum CPUs to use (default: 128)
+--max_memory        {ARG_TEXT}      Maximum memory to use (default: '256.GB')
+--max_time          {ARG_TEXT}      Maximum run time (default: '48.h')
+"""
+
+def make_fastq_map(dir):
+    files = [f for f in os.listdir(dir) if f.endswith(".fastq") or f.endswith(".fastq.gz")]
+
+    paired_files = find_pairs(dir, files)
+    return paired_files
+
+def find_pairs(dir, files):
+    pairs = defaultdict(list)
+    for f in files:
+        temp_delim = "." if "_" not in f else "_"
+        pairs[f.split(temp_delim)[0]].append(os.path.join(dir, f))
+
+    for pair in pairs.values():
+        assert len(pair) <= 2, f"""
+        more than 2 files per pair, file names are not unique enough: {pair};
+        Ensure that filenames before the first '_' or '.' are unique to the sample.
+        """
+        pair.sort()
+        if len(pair) == 1:
+            pair.append("")
+
+    return pairs
+
+def make_samplesheet(dir, samplesheet_name = "samplesheet.csv", sep = ","):
+    fastq_map = make_fastq_map(dir)
+
+    if sep == "," and not samplesheet_name.endswith(".csv"):
+        samplesheet_name += ".csv"
+
+    if sep == "\t" and not samplesheet_name.endswith(".tsv"):
+        samplesheet_name += ".tsv"
+
+    with open(samplesheet_name, "w") as outf:
+        header = ["sample", "fastq_1", "fastq_2"]
+        _ = outf.write(sep.join(header) + "\n")
+        for sample, fastqs in fastq_map.items():
+            _ = outf.write(f"{sample}{sep}{sep.join(fastqs)}\n")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(add_help=False, exit_on_error=False)
+    _ = parser.add_argument("input", help = argparse.SUPPRESS)
+    _ = parser.add_argument("-profile", required=False, default=None, help = argparse.SUPPRESS)
+    _ = parser.add_argument("--print_log", action="store_true", help = argparse.SUPPRESS)
+    _ = parser.add_argument("-h", "--help", action="store_true", help = argparse.SUPPRESS)
+
+    try:
+        args, extra = parser.parse_known_args()
+    except argparse.ArgumentError as e:
+        print(e)
+        print(HELP)
+        sys.exit(1)
+
+    if args.help:
+        print(HELP)
+        sys.exit(0)
+
+    profile = ["-profile", args.profile] if args.profile else []
+    print_log = ["-process.echo"] if args.print_log else []
+
+    extra = extra + profile + print_log
+
+    make_samplesheet(args.input)
+    try:
+        subprocess.run(['nextflow', 'run', 'main.nf', '--input', 'samplesheet.csv'] + extra)
+    except KeyboardInterrupt:
+        print("Abort signal recieved! Killing nextflow run...")
+
+    sys.exit(0)
