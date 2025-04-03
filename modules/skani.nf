@@ -21,7 +21,7 @@ process SKANI {
     -m 50 \\
     -s 50 \\
     -c 20 \\
-    --min-af 15 \\
+    --min-af 60 \\
     --no-learned-ani \\
     --robust \\
     --detailed \\
