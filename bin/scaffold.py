@@ -30,29 +30,33 @@ def report_contig_stats(query_seqs: list[str], num_fastas: int, scaf_len: int, o
     Returns:
         None
     """
-    lengths = [len(seq) for seq in query_seqs]
-    lengths.sort(reverse=True)
-    longest = lengths[0]
-    shortest = lengths[-1]
+    if not query_seqs:
+        longest = num_filtered = shortest = n50 = scaf_len = -1
 
-    def get_N50(lengths: list[int]):
-        """
-        Get N50 from a list of contig lengths sorted in descending order
-        """
-        total_length = sum(lengths)
+    else:
+        lengths = [len(seq) for seq in query_seqs]
+        lengths.sort(reverse=True)
+        longest = lengths[0]
+        shortest = lengths[-1]
 
-        cumu_length = 0
-        for length in lengths:
-            cumu_length += length
-            if cumu_length >= total_length / 2:
-                return length
+        def get_N50(lengths: list[int]):
+            """
+            Get N50 from a list of contig lengths sorted in descending order
+            """
+            total_length = sum(lengths)
 
-        return -1
+            cumu_length = 0
+            for length in lengths:
+                cumu_length += length
+                if cumu_length >= total_length / 2:
+                    return length
 
-    n50 = get_N50(lengths)
-    num_filtered = len(query_seqs)
+            return -1
 
-    log.info(f"Writing contig stats to report file: {output_file}")
+        n50 = get_N50(lengths)
+        num_filtered = len(query_seqs)
+
+        log.info(f"Writing contig stats to report file: {output_file}")
     with open(output_file, "w") as outf:
         _ = outf.write("num_total_contigs\tnum_filtered_contigs\tN50\tshortest_contig_len\tlongest_contig_len\tscaffold_length\n" + 
                        f"{num_fastas}\t{num_filtered}\t{n50}\t{shortest}\t{longest}\t{scaf_len}\r")
@@ -204,6 +208,9 @@ def check_if_longer_than_ref(recs: list[AlignedSequence], ref_len: int) -> Align
 
     Note that the "length" here is intended to be calculated from # of reference bases covered; this function shouldn't pick partial alignments with massive overhangs.
     """
+    if not recs:
+        return None
+
     recs.sort(key = lambda x: (x.length, x.aln_record.mapping_quality), reverse = True)
     ret: AlignedSequence | None = None
     r = recs[0]
@@ -226,6 +233,9 @@ def glue_alns_across_ref(recs: list[AlignedSequence], ref_len: int, pad_ends: bo
     Returns:
         str: the sequence of the scaffold
     """
+    if not recs:
+        return "".join(["N"] * ref_len)
+
     supercontig = check_if_longer_than_ref(recs, ref_len)
     if supercontig:
         log.info(f"{supercontig.id}:Found supercontig for reference, from coords {supercontig.aln_start} - {supercontig.aln_end}")
@@ -284,7 +294,6 @@ def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: st
     for a in aligns:
         log.debug(a.seq, a.length, a.aln_start, a.aln_end, a.aln_record.query_name)
 
-    ## do the scaffolding with just the contigs, don't fill end gaps
     seq = glue_alns_across_ref(aligns, ref_len, False)
 
     ## if we have a significant number of continuous Ns, then try to gapfill with Gap2Seq

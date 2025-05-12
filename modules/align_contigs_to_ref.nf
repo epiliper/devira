@@ -15,6 +15,6 @@ process ALIGN_CONTIGS_TO_REF {
     """
     echo ${prefix}.sam
     bwa-mem2 index $ref
-    bwa-mem2 mem $ref $contigs > ${prefix}.sam
+    bwa-mem2 mem -B 1 -k 15-a $ref $contigs > ${prefix}.sam
     """
 }

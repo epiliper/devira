@@ -5,6 +5,7 @@ process SELECT_REFERENCES {
 
     input: 
     tuple val(meta), val(tax_info), path(contigs), path(dist_report)
+    path(refs)
 
     output:
     tuple val(meta), val(tax_info), path("*failed_assembly.tsv"), optional: true, emit: failed_assembly
@@ -14,7 +15,8 @@ process SELECT_REFERENCES {
     """
     select_references.py --sample ${meta.id} \\
         --dist_report $dist_report \\
-        --ani_thres 60.0 \\
-        --align_ref_thres 50.0
+        --ani_thres 50.0 \\
+        --align_ref_thres 30.0 \\
+        --reference_fasta $refs
     """
 }

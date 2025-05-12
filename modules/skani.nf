@@ -18,13 +18,14 @@ process SKANI {
     // https://github.com/broadinstitute/viral-assemble/blob/master/assembly.py
     """
     skani dist ${contigs} ${ref} \\
-    -m 50 \\
+    -m 75 \\
     -s 50 \\
-    -c 20 \\
-    --min-af 60 \\
+    -c 30 \\
+    --min-af 15 \\
     --no-learned-ani \\
     --robust \\
     --detailed \\
+    --median \\
     --ci \\
     --ri \\
     --no-marker-index \\

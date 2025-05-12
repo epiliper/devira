@@ -11,7 +11,7 @@ workflow REFERENCE_PREP {
     main:
     SKANI(contigs, db)
 
-    SELECT_REFERENCES(SKANI.out.dist)
+    SELECT_REFERENCES(SKANI.out.dist, db)
 
     // if we have the same reference being selected for multiple taxon ids, then select
     // only the taxon id with the highest read count to be used to generate said reference
