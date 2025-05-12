@@ -87,6 +87,23 @@ def find_pairs(dir, files):
 
     return pairs
 
+def confirm_samplesheet(fastq_map):
+    print("\nsample\tfastq_1\tfastq_2")
+    print("=======================================")
+    for sample, row in fastq_map.items():
+        r = [sample] + row
+        print(f"{"\t".join(r)}\r")
+    print("")
+
+    while True:
+            response = input("Does the samplesheet look correct? [y/n]").strip().lower()
+            if response in ['yes', 'y']:
+                return True
+            elif response in ['no', 'n']:
+                sys.exit(0)
+            else:
+                print("Please enter 'yes' or 'no'.")
+
 def make_samplesheet(dir, samplesheet_name = "samplesheet.csv", sep = ","):
     fastq_map = make_fastq_map(dir)
 
@@ -95,6 +112,8 @@ def make_samplesheet(dir, samplesheet_name = "samplesheet.csv", sep = ","):
 
     if sep == "\t" and not samplesheet_name.endswith(".tsv"):
         samplesheet_name += ".tsv"
+
+    confirm_samplesheet(fastq_map)
 
     with open(samplesheet_name, "w") as outf:
         header = ["sample", "fastq_1", "fastq_2"]
