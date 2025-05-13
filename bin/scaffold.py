@@ -8,6 +8,12 @@ import argparse
 import logging
 import gapfill
 import random
+from enum import Enum
+
+class Extend(Enum):
+    LEFT = "5'"
+    INTERIOR = "interior"
+    RIGHT = "3'"
 
 log = logging.getLogger("scaffold")
 log.setLevel(logging.DEBUG)
@@ -68,53 +74,107 @@ class AlignedSequence:
     id: str
     length: int
     aln_start: int
+    query_start: int
     aln_end: int
+    query_end: int
 
-    def extend_with_clipping(self):
+    def has_left_overhang(self) -> int:
+        """
+        check if the alignment has clipped sequence that precedes the 0th ref coordinate
+        if it does, return the number of bases from 0th coordinate to the alignment start
+        """
         rec = self.aln_record
-        length = rec.query_alignment_length
         cig = rec.cigartuples
-        self.aln_start = self.aln_record.reference_start
+        if not cig: return sys.maxsize
 
-        ## calculate reference end if it's not available
-        end = self.aln_record.reference_end 
-        if not end:
-            end = self.aln_record.query_alignment_length + self.aln_record.reference_start
+        if cig[0][0] in [4, 5]:
+            clip_len = cig[0][1]
+            if self.aln_start - clip_len < 0:
+                return abs(self.aln_start)
 
-        self.aln_end = end
+        return sys.maxsize
 
+    def has_right_overhang(self) -> int:
+        """
+        check if the alignment has clipped sequence that goes beyond the last ref coordinate
+        if it does, return the number of bases from the end of the alignment to the end of the reference
+        """
+        rec = self.aln_record
+        cig = rec.cigartuples
+        if not cig or len(cig) == 1: return sys.maxsize
+
+        if cig[-1][0] in [4, 5]:
+            clip_len = cig[-1][1]
+            if self.aln_end + clip_len >= self.ref_len:
+                return abs(self.ref_len - (self.aln_end + clip_len))
+
+        return sys.maxsize
+
+    def trim_to_ref_ends(self):
+        l_delta = self.aln_start
+        r_delta = self.aln_end - self.ref_len
+
+        if l_delta < 0:
+            l_delta = abs(l_delta)
+            self.aln_start += l_delta
+            self.length -= l_delta
+            self.query_start += l_delta
+            assert self.aln_start == 0
+
+        if r_delta > 0:
+            self.aln_end -= r_delta
+            self.length -= r_delta
+            self.query_end -= r_delta
+            assert(self.aln_end == self.ref_len)
+
+        self.seq = self.seq[self.query_start: self.query_end]
+
+    def extend_clip(self, ext_choice: Extend, limit: int):
+        rec = self.aln_record
+        cig = rec.cigartuples
+        did_extension = False
+        pad = 0
         if not cig: return
 
-        ext_limit_l = 500 + self.aln_start
-        ext_limit_r = 500 + (self.ref_len - self.aln_end)
+        match ext_choice:
+            case Extend.LEFT:
+                if cig[0][0] in [4, 5]:
+                    pad = min(cig[0][1], limit)
+                    self.length += pad
+                    self.aln_start -= pad
+                    self.query_start -= pad
+                    did_extension = True
 
-        ## if the alignment contains soft- (4) or hard-clipping (5), adjust the length to include clipped bases.
-        ## We're doing this because we want as little reference bias as possible, and don't want to trim contig sequence yet.
+            case Extend.INTERIOR:
+                if len(cig) <= 2:
+                    return
 
-        # left clip detected
-        if cig[0][0] in [4, 5]:
-            pad = min(ext_limit_l, cig[0][1]) # limit start ext
-            length += pad
-            self.aln_start -= pad
+                for c in cig[1:-1]:
+                    # interior clipping detected
+                    if c[0] in [4, 5]:
+                        pad = cig[0][1]
+                        self.length += pad
+                        self.aln_end += pad
+                        self.query_end += pad
+                        did_extension = True
 
-        for c in cig[1:-1]:
-            # interior clipping detected
-            if c[0] in [4, 5]:
-                length += c[1]
-                self.aln_end += c[1]
+            case Extend.RIGHT:
+                if len(cig) == 1:
+                    return
 
-        # right clip detected
-        if len(cig) > 1 and cig[-1][0] in [4, 5]:
-            pad = min(ext_limit_r, cig[-1][1]) # limit end ext
-            length += pad
-            self.aln_end += pad
+                if len(cig) > 1 and cig[-1][0] in [4, 5]:
+                    pad = min(cig[-1][1], limit) # limit end ext
+                    self.length += pad
+                    self.aln_end += pad
+                    self.query_end += pad
+                    did_extension = True
 
-        self.length = length
         if self.length > len(self.seq):
             log.fatal(f"{self.id}: Error: cigar length is longer than query sequence: {self.length}: {len(self.seq)}")
             exit(1)
 
-        log.info(f"{self.id}: extended to length {self.length} from cigar {cig} along coordinates {self.aln_start} - {self.aln_end}")
+        if did_extension:
+            log.info(f"{self.id}: extended to length {self.length} from cigar {cig} along coordinates {self.aln_start} - {self.aln_end}; Extension type: {ext_choice.value}")
 
     def load_seq(self, seq: str, rev: bool):
         if rev:
@@ -126,8 +186,26 @@ class AlignedSequence:
         self.aln_record = rec
         self.ref_len = ref_len
         self.id = rec.query_name or "_NAME_NOT_FOUND_"
+        self.length = self.aln_record.query_alignment_length
+        self.query_start = self.aln_record.query_alignment_start
+        self.query_end = self.aln_record.query_alignment_end
+
+        self.aln_start = self.aln_record.reference_start
+        ## calculate reference end if it's not available
+        end = self.aln_record.reference_end 
+        if not end:
+            end = self.aln_record.query_alignment_length + self.aln_record.reference_start
+        self.aln_end = end
+
         self.load_seq(seq, rec.is_reverse)
-        self.extend_with_clipping()
+        l_overhang_limit = self.has_left_overhang()
+        r_overhang_limit = self.has_right_overhang()
+
+        self.extend_clip(Extend.LEFT, l_overhang_limit)
+        self.extend_clip(Extend.INTERIOR, sys.maxsize)
+        self.extend_clip(Extend.RIGHT, r_overhang_limit)
+
+        self.trim_to_ref_ends()
 
 def load_alignments(file: str, fastas: dict[str, str], min_seq_length: int) -> tuple[int, list[AlignedSequence]]:
     """
@@ -173,7 +251,7 @@ def load_alignments(file: str, fastas: dict[str, str], min_seq_length: int) -> t
                 continue
 
         except KeyError:
-            log.info(f"Sequence for alignment not found")
+            log.info(f"Sequence for alignment not found: {rec.query_name}")
             exit(1)
 
         records.append(AlignedSequence(rec, seq, ref_len))
