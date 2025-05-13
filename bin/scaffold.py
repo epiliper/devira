@@ -90,11 +90,12 @@ class AlignedSequence:
         if cig[0][0] in [4, 5]:
             clip_len = cig[0][1]
             if self.aln_start - clip_len < 0:
-                return abs(self.aln_start)
+                # return abs(self.aln_start)
+                return int(self.ref_len * 0.10)
 
         return sys.maxsize
 
-    def has_right_overhang(self) -> int:
+    def has_right_overhang(self) -> float:
         """
         check if the alignment has clipped sequence that goes beyond the last ref coordinate
         if it does, return the number of bases from the end of the alignment to the end of the reference
@@ -106,7 +107,8 @@ class AlignedSequence:
         if cig[-1][0] in [4, 5]:
             clip_len = cig[-1][1]
             if self.aln_end + clip_len >= self.ref_len:
-                return abs(self.ref_len - (self.aln_end + clip_len))
+                # return abs(self.ref_len - (self.aln_end + clip_len))
+                return int(self.ref_len * 0.10)
 
         return sys.maxsize
 
@@ -205,7 +207,7 @@ class AlignedSequence:
         self.extend_clip(Extend.INTERIOR, sys.maxsize)
         self.extend_clip(Extend.RIGHT, r_overhang_limit)
 
-        self.trim_to_ref_ends()
+        #self.trim_to_ref_ends()
 
 def load_alignments(file: str, fastas: dict[str, str], min_seq_length: int) -> tuple[int, list[AlignedSequence]]:
     """
