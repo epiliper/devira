@@ -3,6 +3,7 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'No sampleshe
 if (!params.refs || !file(params.refs).exists()) { exit 1, "Invalid path specified: reference genome multifasta (--ref) " }
 if (!params.kraken2_db || !file(params.kraken2_db).exists()) {exit 1, "Invalid path specified: kraken2 database (--kraken2_db)" }
 if (!params.taxids || !file(params.taxids).exists()) {exit 1, "Invalid path specified: taxon ID TSV (--taxids)" }
+if (params.host_kraken2_db && !file(params.host_kraken2_db).exists()) { exit 1, "unable to find kraken host db (--kraken_host_db)"}
 
 // Import subworkflows
 include { INPUT_CHECK           } from './subworkflows/input_check'
@@ -10,6 +11,7 @@ include { FASTP_MULTIQC         } from './subworkflows/fastp_multiqc'
 include { PROFILE_READS         } from './subworkflows/profile_reads'
 include { CONTIG_GEN            } from './subworkflows/contig_gen'
 include { CONSENSUS_ASSEMBLY    } from './subworkflows/consensus_assembly'
+include { REMOVE_HOST           } from './subworkflows/remove_host'
 
 // Import modules
 include { KRAKEN2           } from './modules/kraken2'
@@ -33,12 +35,10 @@ workflow {
     inreads = INPUT_CHECK.out.reads
 
     if (params.subsample_raw) {
-
         SUBSAMPLE_FASTQ(
             inreads,
             params.subsample_raw
         )
-
         inreads = SUBSAMPLE_FASTQ.out.reads
     }
 
@@ -51,6 +51,11 @@ workflow {
     )
 
     ch_sample_input = FASTP_MULTIQC.out.reads
+
+    if (params.host_kraken2_db) {
+        REMOVE_HOST(ch_sample_input, params.host_kraken2_db)
+        ch_sample_input = REMOVE_HOST.out.reads
+        }
 
     PROFILE_READS(
         ch_sample_input,
@@ -72,13 +77,8 @@ workflow {
         CONTIG_GEN.out.reads,
     )
 
-    // [ meta, tax_info, log, contigs, n50 ]
     FASTP_MULTIQC.out.trim_log
     .combine(
-        //CONTIG_GEN.out.contigs.map { meta, tax_info, ref_info, scaffold -> 
-        //[ meta, tax_info, scaffold ] }
-        //.join(CONTIG_GEN.out.contig_stats, by: [0, 1]),
-        //by: 0)
         CONTIG_GEN.out.contigs,
         by: 0)
     .map { meta, log, tax_info, ref_info, contigs  -> [ meta, tax_info, ref_info, log, contigs ] }
