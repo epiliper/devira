@@ -127,6 +127,7 @@ if __name__ == "__main__":
     _ = parser.add_argument("-profile", required=False, default=None, help = argparse.SUPPRESS)
     _ = parser.add_argument("--print_log", action="store_true", help = argparse.SUPPRESS)
     _ = parser.add_argument("-h", "--help", action="store_true", help = argparse.SUPPRESS)
+    _ = parser.add_argument("--local", action="store_true", help = argparse.SUPPRESS)
 
     try:
         args, extra = parser.parse_known_args()
@@ -146,7 +147,10 @@ if __name__ == "__main__":
 
     make_samplesheet(args.input)
     try:
-        subprocess.run(['nextflow', 'run', 'main.nf', '--input', 'samplesheet.csv'] + extra)
+        if args.local:
+            subprocess.run(['nextflow', 'run', 'main.nf', '--input', 'samplesheet.csv'] + extra)
+        else:
+            subprocess.run(['epiliper/devira', '-latest', '-r', 'main', 'samplesheet.csv'] + extra)
     except KeyboardInterrupt:
         print("Abort signal recieved! Killing nextflow run...")
 

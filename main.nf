@@ -53,9 +53,13 @@ workflow {
     ch_sample_input = FASTP_MULTIQC.out.reads
 
     if (params.host_kraken2_db) {
-        REMOVE_HOST(ch_sample_input, params.host_kraken2_db)
+        REMOVE_HOST(
+            ch_sample_input, 
+            file(params.host_kraken2_db)
+        )
+
         ch_sample_input = REMOVE_HOST.out.reads
-        }
+    }
 
     PROFILE_READS(
         ch_sample_input,
