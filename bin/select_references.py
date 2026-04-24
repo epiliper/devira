@@ -70,7 +70,10 @@ def select_refs(sample_identifier, dist_tsv, ani_thres, align_ref_thres, referen
     out_rows = {}
     for row in data:
         s = row["Ref_name"].split(' ')
-        acc, tag, desc = s[0], s[1], s[2:]
+        if len(s) < 3:
+            print("Invalid reference database format: fewer than three spaces! should be <ACCESSION> <REF_TAG> <DESCRIPTION>")
+            exit(1)
+        _, tag, _ = s[0], s[1], s[2:]
         if tag not in out_rows:
             if (float(row["Align_fraction_ref"]) >= align_ref_thres and 
                 float(row["ANI"]) >= ani_thres):

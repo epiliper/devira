@@ -53,7 +53,6 @@ workflow PROFILE_READS {
             sort: {file -> file.text}
         )
 
-
     EXTRACT_TAXON_ID.out
     .profile_report.set { profile_reports }
 

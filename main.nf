@@ -3,7 +3,7 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'No sampleshe
 if (!params.refs || !file(params.refs).exists()) { exit 1, "Invalid path specified: reference genome multifasta (--ref) " }
 if (!params.kraken2_db || !file(params.kraken2_db).exists()) {exit 1, "Invalid path specified: kraken2 database (--kraken2_db)" }
 if (!params.taxids || !file(params.taxids).exists()) {exit 1, "Invalid path specified: taxon ID TSV (--taxids)" }
-if (params.host_kraken2_db && !file(params.host_kraken2_db).exists()) { exit 1, "unable to find kraken host db (--kraken_host_db)"}
+if (params.host_kraken2_db && !file(params.host_kraken2_db).exists()) { exit 1, "unable to find kraken host db (--host_kraken2_db)"}
 
 // Import subworkflows
 include { INPUT_CHECK           } from './subworkflows/input_check'

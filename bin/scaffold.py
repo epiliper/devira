@@ -85,14 +85,14 @@ class AlignedSequence:
         """
         rec = self.aln_record
         cig = rec.cigartuples
-        if not cig: return 0
+        if not cig: return sys.maxsize
 
         if cig[0][0] in [4, 5]:
             clip_len = cig[0][1]
             if self.aln_start - clip_len < 0:
-                return self.aln_start
+                return abs(self.aln_start)
 
-        return 0
+        return sys.maxsize
 
     def has_right_overhang(self) -> int:
         """
@@ -101,20 +101,16 @@ class AlignedSequence:
         """
         rec = self.aln_record
         cig = rec.cigartuples
-        if not cig or len(cig) == 1: return 0
+        if not cig or len(cig) == 1: return sys.maxsize
 
         if cig[-1][0] in [4, 5]:
             clip_len = cig[-1][1]
             if self.aln_end + clip_len >= self.ref_len:
-                return self.ref_len - self.aln_end
+                return abs(self.ref_len - (self.aln_end + clip_len))
 
-        return 0
+        return sys.maxsize
 
-    def trim_seq_to_aln(self):
-        self.seq = self.seq[self.query_start: self.query_end]
-        assert len(self.seq) == self.length
-                
-    def trim_seq_to_ref(self):
+    def trim_to_ref_ends(self):
         l_delta = self.aln_start
         r_delta = self.aln_end - self.ref_len
 
@@ -202,20 +198,14 @@ class AlignedSequence:
         self.aln_end = end
 
         self.load_seq(seq, rec.is_reverse)
-
-        # if the sequence overhangs the ref on the left, then limit extension to either the entire overhang, or 1/10th ref len, whichever is longest
-        # if no overhang, then don't limit extension
-        l_overhang_limit = max(self.has_left_overhang(), int(self.ref_len * 0.10))
-
-        # if the sequence overhangs the ref on the right, then limit extension to either the entire overhang, or 1/10th ref len, whichever is longest
-        # if no overhang, then don't limit extension
-        r_overhang_limit = max(self.has_right_overhang(), int(self.ref_len * 0.10))
+        l_overhang_limit = self.has_left_overhang()
+        r_overhang_limit = self.has_right_overhang()
 
         self.extend_clip(Extend.LEFT, l_overhang_limit)
         self.extend_clip(Extend.INTERIOR, sys.maxsize)
         self.extend_clip(Extend.RIGHT, r_overhang_limit)
 
-        self.trim_seq_to_aln()
+        self.trim_to_ref_ends()
 
 def load_alignments(file: str, fastas: dict[str, str], min_seq_length: int) -> tuple[int, list[AlignedSequence]]:
     """
