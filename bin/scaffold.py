@@ -376,17 +376,17 @@ def main(align_file: str, query_fasta: str, outfile: str, prefix: str, reads: st
 
     ## if we have a significant number of continuous Ns, then try to gapfill with Gap2Seq
     seq = seq.lstrip("N").rstrip("N") # strip leading and trailing Ns, which otherwise make gap2seq crash
-    if "".join(["N"] * 10) in seq:
+    # if "".join(["N"] * 10) in seq:
 
-        temp = f"{random.randint(1_000_000, 9_999_999)}.fa"
+    #     temp = f"{random.randint(1_000_000, 9_999_999)}.fa"
 
-        with open(temp, "w") as outf:
-            _ = outf.write(f">{prefix}_scaffold\n")
-            _ = outf.write(f"{seq}\n")
+    #     with open(temp, "w") as outf:
+    #         _ = outf.write(f">{prefix}_scaffold\n")
+    #         _ = outf.write(f"{seq}\n")
 
-        gapfill.gapfill(temp, reads, outfile)
+    #     gapfill.gapfill(temp, reads, outfile)
 
-        seq = next(SeqIO.parse(outfile, "fasta")).seq
+    #     seq = next(SeqIO.parse(outfile, "fasta")).seq
 
     ## if the gapfilled scaffold is still shorter, then pad it with Ns for downstream mapping/consensus calling
     if len(seq) < ref_len:
